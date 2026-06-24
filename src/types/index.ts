@@ -19,7 +19,7 @@ export interface User {
 export interface Pet {
   id: string;
   name: string;
-  type: 'cat' | 'dog' | 'dragon' | 'fox' | 'chimera' | 'alien' | 'phoenix';
+  type: 'dragon' | 'cat' | 'dog' | 'fox' | 'tiger' | 'wolf' | 'panther' | 'owl' | 'panda' | 'chimera' | 'alien' | 'phoenix';
   hunger: number;
   happiness: number;
   energy: number;
@@ -81,15 +81,12 @@ export interface Achievement {
 
 export interface GameInvite {
   id: string;
-  gameType: 'pingpong' | 'soccer' | 'checkers' | 'race' | 'space' | 'quiz' | 'guess_pic';
+  gameType: 'guess_pic';
   gameName: string;
   senderName: string;
   status: 'pending' | 'active' | 'finished';
   myScore: number;
   friendScore: number;
-  question?: string;
-  options?: string[];
-  correctOption?: number;
   anonPhotoUrl?: string;
   revealedAuthor?: string;
   votes?: Record<string, string>; // userId -> nomeVotado
