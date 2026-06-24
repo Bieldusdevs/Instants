@@ -3,9 +3,28 @@ export interface User {
   name: string;
   email: string;
   image: string;
-  streak: number; // Foguinho total 🔥
+  streak: number; // Foguinho diário 🔥
   instantsCount: number;
   handle: string;
+  password?: string;
+  petId?: string;
+}
+
+export interface Pet {
+  id: string;
+  name: string;
+  type: 'cat' | 'dog' | 'dragon' | 'fox';
+  hunger: number;     // 0 a 100
+  happiness: number;  // 0 a 100
+  energy: number;     // 0 a 100
+  hygiene: number;    // 0 a 100
+  level: number;
+  xp: number;
+  hat: string;        // 'none' | 'crown' | 'wizard' | 'cap'
+  glasses: string;    // 'none' | 'cyber' | 'thug' | 'pixel'
+  accessory: string;  // 'none' | 'scarf' | 'chain' | 'aura'
+  owners: { name: string; avatar: string }[];
+  isShared: boolean;
 }
 
 export interface Reaction {
@@ -13,14 +32,6 @@ export interface Reaction {
   emoji: string;
   userName: string;
   userImage: string;
-}
-
-export interface InstantReply {
-  id: string;
-  text: string;
-  createdAt: string;
-  senderName: string;
-  senderImage: string;
 }
 
 export interface Instant {
@@ -42,12 +53,24 @@ export interface Instant {
   location?: string;
 }
 
+export interface GameInvite {
+  id: string;
+  gameType: 'pingpong' | 'soccer' | 'checkers' | 'race' | 'space';
+  gameName: string;
+  senderName: string;
+  status: 'pending' | 'active' | 'finished';
+  myScore: number;
+  friendScore: number;
+}
+
 export interface ChatMessage {
   id: string;
   senderId: string;
   text?: string;
   mediaUrl?: string;
   mediaType?: 'image' | 'video' | 'instant';
+  gameInvite?: GameInvite;
+  petInvite?: { petName: string; petType: Pet['type']; status: 'pending' | 'accepted' };
   timestamp: string;
   isMe: boolean;
 }
@@ -57,7 +80,8 @@ export interface FriendChat {
   name: string;
   handle: string;
   avatar: string;
-  streak: number; // Foguinho diário com essa pessoa 🔥
+  streak: number; // Ofensiva Foguinho 🔥
+  sharedPet?: Pet;
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;

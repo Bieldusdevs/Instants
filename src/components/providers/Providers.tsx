@@ -1,21 +1,31 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Instant, FriendChat, User } from "@/types";
-import { CURRENT_USER_MOCK, INITIAL_INSTANTS, INITIAL_FRIENDS_CHATS } from "@/data/mockData";
+import { Instant, FriendChat, User, Pet, GameInvite } from "@/types";
+import { CURRENT_USER_MOCK, INITIAL_INSTANTS, INITIAL_FRIENDS_CHATS, INITIAL_MY_PET } from "@/data/mockData";
 
 interface AppContextType {
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  pet: Pet;
+  setPet: React.Dispatch<React.SetStateAction<Pet>>;
   instants: Instant[];
   chats: FriendChat[];
-  activeTab: "feed" | "camera" | "chat" | "profile";
-  setActiveTab: (tab: "feed" | "camera" | "chat" | "profile") => void;
+  activeTab: "feed" | "camera" | "pet" | "chat" | "profile";
+  setActiveTab: (tab: "feed" | "camera" | "pet" | "chat" | "profile") => void;
   addInstant: (mediaUrl: string, caption: string, mediaType?: "image" | "video") => void;
   likeInstant: (id: string) => void;
   replyToInstant: (instantId: string, text: string) => void;
   sendMessage: (friendId: string, text?: string, mediaUrl?: string) => void;
-  loginAsDemo: (name?: string) => void;
+  sendGameInvite: (friendId: string, gameType: GameInvite["gameType"], gameName: string) => void;
+  sendPetInvite: (friendId: string, petName: string, petType: Pet["type"]) => void;
+  feedPet: () => void;
+  playPet: () => void;
+  cleanPet: () => void;
+  sleepPet: () => void;
+  updatePetStyle: (slot: "hat" | "glasses" | "accessory", value: string) => void;
+  registerAccount: (name: string, handle: string, petName: string, petType: Pet["type"]) => void;
+  loginAccount: (handle: string) => void;
   logout: () => void;
   selectedChatId: string | null;
   setSelectedChatId: (id: string | null) => void;
@@ -33,36 +43,100 @@ export const useApp = () => {
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [pet, setPet] = useState<Pet>(INITIAL_MY_PET);
   const [instants, setInstants] = useState<Instant[]>(INITIAL_INSTANTS);
   const [chats, setChats] = useState<FriendChat[]>(INITIAL_FRIENDS_CHATS);
-  const [activeTab, setActiveTab] = useState<"feed" | "camera" | "chat" | "profile">("feed");
+  const [activeTab, setActiveTab] = useState<"feed" | "camera" | "pet" | "chat" | "profile">("feed");
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 
-  // Recupera sessão salva no localStorage
   useEffect(() => {
-    const savedUser = localStorage.getItem("instants_demo_user");
+    const savedUser = localStorage.getItem("instants_user_v2");
+    const savedPet = localStorage.getItem("instants_pet_v2");
     if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        console.error(e);
-      }
+      try { setUser(JSON.parse(savedUser)); } catch (e) {}
+    }
+    if (savedPet) {
+      try { setPet(JSON.parse(savedPet)); } catch (e) {}
     }
   }, []);
 
-  const loginAsDemo = (name = "Alex Cyber") => {
+  const saveUserAndPet = (u: User | null, p: Pet) => {
+    if (u) localStorage.setItem("instants_user_v2", JSON.stringify(u));
+    localStorage.setItem("instants_pet_v2", JSON.stringify(p));
+  };
+
+  const registerAccount = (name: string, handle: string, petName: string, petType: Pet["type"]) => {
     const newUser: User = {
       ...CURRENT_USER_MOCK,
-      name,
-      handle: `@${name.toLowerCase().replace(/\s+/g, ".")}`,
+      name: name || "Alex Cyber",
+      handle: handle.startsWith("@") ? handle : `@${handle}`,
+    };
+    const newPet: Pet = {
+      ...INITIAL_MY_PET,
+      name: petName || "Byte",
+      type: petType || "dragon",
+      owners: [{ name: newUser.name, avatar: newUser.image }],
+      isShared: false,
     };
     setUser(newUser);
-    localStorage.setItem("instants_demo_user", JSON.stringify(newUser));
+    setPet(newPet);
+    saveUserAndPet(newUser, newPet);
+  };
+
+  const loginAccount = (handle: string) => {
+    const defaultName = handle ? handle.replace("@", "").toUpperCase() : "Alex Cyber";
+    const loggedUser: User = {
+      ...CURRENT_USER_MOCK,
+      name: defaultName,
+      handle: handle.startsWith("@") ? handle : `@${handle || "alex.instants"}`,
+    };
+    setUser(loggedUser);
+    saveUserAndPet(loggedUser, pet);
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("instants_demo_user");
+    localStorage.removeItem("instants_user_v2");
+  };
+
+  const feedPet = () => {
+    setPet((prev: any) => {
+      const next = { ...prev, hunger: Math.min(100, prev.hunger + 25), xp: prev.xp + 15 };
+      saveUserAndPet(user, next);
+      return next;
+    });
+  };
+
+  const playPet = () => {
+    setPet((prev: any) => {
+      const next = { ...prev, happiness: Math.min(100, prev.happiness + 25), energy: Math.max(0, prev.energy - 10), xp: prev.xp + 20 };
+      saveUserAndPet(user, next);
+      return next;
+    });
+  };
+
+  const cleanPet = () => {
+    setPet((prev: any) => {
+      const next = { ...prev, hygiene: Math.min(100, prev.hygiene + 30), xp: prev.xp + 10 };
+      saveUserAndPet(user, next);
+      return next;
+    });
+  };
+
+  const sleepPet = () => {
+    setPet((prev: any) => {
+      const next = { ...prev, energy: 100 };
+      saveUserAndPet(user, next);
+      return next;
+    });
+  };
+
+  const updatePetStyle = (slot: "hat" | "glasses" | "accessory", value: string) => {
+    setPet((prev: any) => {
+      const next = { ...prev, [slot]: value };
+      saveUserAndPet(user, next);
+      return next;
+    });
   };
 
   const addInstant = (mediaUrl: string, caption: string, mediaType: "image" | "video" = "image") => {
@@ -82,33 +156,30 @@ export function Providers({ children }: { children: React.ReactNode }) {
       likes: 0,
       hasLiked: false,
       streakDays: user.streak + 1,
-      location: "Meu Local ✨",
+      location: "Meu Story ✨",
       repliesCount: 0,
       reactions: [],
     };
 
-    // Atualiza o Foguinho da conta 🔥
-    const updatedUser = {
-      ...user,
-      streak: user.streak + 1,
-      instantsCount: user.instantsCount + 1,
-    };
+    const updatedUser = { ...user, streak: user.streak + 1, instantsCount: user.instantsCount + 1 };
     setUser(updatedUser);
-    localStorage.setItem("instants_demo_user", JSON.stringify(updatedUser));
 
-    setInstants((prev) => [newInst, ...prev]);
+    // Tirar foto dá +30 de comida e felicidade pro Pet co-op! 🐾
+    setPet((prev: any) => {
+      const next = { ...prev, hunger: Math.min(100, prev.hunger + 30), happiness: Math.min(100, prev.happiness + 30) };
+      saveUserAndPet(updatedUser, next);
+      return next;
+    });
+
+    setInstants((prev: any) => [newInst, ...prev]);
   };
 
   const likeInstant = (id: string) => {
-    setInstants((prev) =>
-      prev.map((inst) => {
+    setInstants((prev: any) =>
+      prev.map((inst: any) => {
         if (inst.id === id) {
           const hasLiked = !inst.hasLiked;
-          return {
-            ...inst,
-            hasLiked,
-            likes: hasLiked ? inst.likes + 1 : inst.likes - 1,
-          };
+          return { ...inst, hasLiked, likes: hasLiked ? inst.likes + 1 : inst.likes - 1 };
         }
         return inst;
       })
@@ -116,15 +187,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
   };
 
   const replyToInstant = (instantId: string, text: string) => {
-    const targetInstant = instants.find((i) => i.id === instantId);
+    const targetInstant = instants.find((i: any) => i.id === instantId);
     if (!targetInstant || !user) return;
 
-    setInstants((prev) =>
-      prev.map((inst) => (inst.id === instantId ? { ...inst, repliesCount: inst.repliesCount + 1 } : inst))
+    setInstants((prev: any) =>
+      prev.map((inst: any) => (inst.id === instantId ? { ...inst, repliesCount: inst.repliesCount + 1 } : inst))
     );
 
-    const friendId = targetInstant.userId;
-    sendMessage(friendId, `📸 Resposta ao Instant: "${text}"`);
+    sendMessage(targetInstant.userId, `📸 Story reply: "${text}"`);
   };
 
   const sendMessage = (friendId: string, text?: string, mediaUrl?: string) => {
@@ -140,52 +210,52 @@ export function Providers({ children }: { children: React.ReactNode }) {
       isMe: true,
     };
 
-    setChats((prev) =>
-      prev.map((chat) => {
+    setChats((prev: any) =>
+      prev.map((chat: any) => {
         if (chat.id === friendId) {
-          return {
-            ...chat,
-            lastMessage: text || "📸 Foto enviada",
-            lastMessageTime: "Agora",
-            messages: [...chat.messages, newMsg],
-          };
+          return { ...chat, lastMessage: text || "📸 Mídia enviada", lastMessageTime: "Agora", messages: [...chat.messages, newMsg] };
         }
         return chat;
       })
     );
+  };
 
-    // Simulação de resposta do amigo após 2 segundos!
-    setTimeout(() => {
-      setChats((prev) =>
-        prev.map((chat) => {
-          if (chat.id === friendId) {
-            const replies = [
-              "Ficou brabo demais 🔥🔥",
-              "Amei!! Manda mais",
-              "Caramba, surreal essa foto ⚡️",
-              "Olha o foguinho subindo 🔥🚀",
-              "Tô entrando no app agora pra postar tbm!",
-            ];
-            const randomReply = replies[Math.floor(Math.random() * replies.length)];
-            const autoReplyMsg = {
-              id: `msg-auto-${Date.now()}`,
-              senderId: friendId,
-              text: randomReply,
-              timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-              isMe: false,
-            };
-            return {
-              ...chat,
-              streak: chat.streak + 1,
-              lastMessage: randomReply,
-              lastMessageTime: "Agora",
-              messages: [...chat.messages, autoReplyMsg],
-            };
-          }
-          return chat;
-        })
-      );
-    }, 2000);
+  const sendGameInvite = (friendId: string, gameType: GameInvite["gameType"], gameName: string) => {
+    if (!user) return;
+    const inviteMsg = {
+      id: `msg-game-${Date.now()}`,
+      senderId: user.id,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      isMe: true,
+      gameInvite: {
+        id: `invite-${Date.now()}`,
+        gameType,
+        gameName,
+        senderName: user.name,
+        status: "active" as const,
+        myScore: 0,
+        friendScore: 0,
+      },
+    };
+
+    setChats((prev: any) =>
+      prev.map((chat: any) => (chat.id === friendId ? { ...chat, lastMessage: `🎮 Convite: ${gameName}`, lastMessageTime: "Agora", messages: [...chat.messages, inviteMsg] } : chat))
+    );
+  };
+
+  const sendPetInvite = (friendId: string, petName: string, petType: Pet["type"]) => {
+    if (!user) return;
+    const inviteMsg = {
+      id: `msg-pet-${Date.now()}`,
+      senderId: user.id,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      isMe: true,
+      petInvite: { petName, petType, status: "pending" as const },
+    };
+
+    setChats((prev: any) =>
+      prev.map((chat: any) => (chat.id === friendId ? { ...chat, lastMessage: `💌 Convite Tamagotchi Dupla: ${petName}`, lastMessageTime: "Agora", messages: [...chat.messages, inviteMsg] } : chat))
+    );
   };
 
   return (
@@ -193,6 +263,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       value={{
         user,
         setUser,
+        pet,
+        setPet,
         instants,
         chats,
         activeTab,
@@ -201,7 +273,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
         likeInstant,
         replyToInstant,
         sendMessage,
-        loginAsDemo,
+        sendGameInvite,
+        sendPetInvite,
+        feedPet,
+        playPet,
+        cleanPet,
+        sleepPet,
+        updatePetStyle,
+        registerAccount,
+        loginAccount,
         logout,
         selectedChatId,
         setSelectedChatId,
