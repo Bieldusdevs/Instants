@@ -8,7 +8,7 @@ export interface User {
   handle: string;
   phone?: string;
   password?: string;
-  petId?: string;
+  petId?: string | null;
   isMapPrivate?: boolean;
   bio?: string;
   followersCount: number;
@@ -87,9 +87,10 @@ export interface GameInvite {
   status: 'pending' | 'active' | 'finished';
   myScore: number;
   friendScore: number;
+  photoUrl?: string;
   anonPhotoUrl?: string;
   revealedAuthor?: string;
-  votes?: Record<string, string>; // userId -> nomeVotado
+  votes?: Record<string, string>;
 }
 
 export interface SecretMessage {
@@ -105,6 +106,15 @@ export interface VoiceMessage {
   waves: number[];
 }
 
+export interface PetInvite {
+  id: string;
+  petName: string;
+  petType: Pet['type'];
+  senderName: string;
+  senderAvatar: string;
+  status: 'pending' | 'accepted';
+}
+
 export interface ChatMessage {
   id: string;
   senderId: string;
@@ -112,7 +122,7 @@ export interface ChatMessage {
   mediaUrl?: string;
   mediaType?: 'image' | 'video' | 'instant' | 'ai_memory' | 'voice' | 'secret_once';
   gameInvite?: GameInvite;
-  petInvite?: { petName: string; petType: Pet['type']; status: 'pending' | 'accepted' };
+  petInvite?: PetInvite;
   timeCapsule?: TimeCapsule;
   secretMessage?: SecretMessage;
   voiceMessage?: VoiceMessage;
@@ -129,7 +139,7 @@ export interface FriendChat {
   streak: number;
   friendshipLevel: number;
   friendshipXp: number;
-  friendshipPet: Pet;
+  friendshipPet?: Pet;
   achievements: Achievement[];
   lastMessage: string;
   lastMessageTime: string;

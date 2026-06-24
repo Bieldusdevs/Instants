@@ -2,28 +2,25 @@
 
 import React, { useState } from "react";
 import { useApp } from "../providers/Providers";
-import { Flame, Send, Camera, ArrowLeft, CheckCheck, Gamepad2, Play, Trophy, X, Lock, Bomb, Eye, Clock, Film, Mic, UserCheck } from "lucide-react";
+import { Flame, Send, Camera, ArrowLeft, CheckCheck, Eye, Clock, Film, Mic, Bomb, Egg, Sparkles, X, Lock, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 
 export function ChatTab() {
-  const { chats, selectedChatId, setSelectedChatId, sendMessage, sendGameInvite, sendVoiceMessage, sendSecretViewOnce, viewSecretMessage, reactToMessage, triggerAiMemory, sendTimeCapsule, voteInGuessPicGame, revealGuessPicAuthor } = useApp();
+  const { user, setUser, chats, selectedChatId, setSelectedChatId, sendMessage, sendGameInvite, sendPetInvite, sendVoiceMessage, sendSecretViewOnce, viewSecretMessage, reactToMessage, triggerAiMemory, sendTimeCapsule, voteInGuessPicGame, revealGuessPicAuthor } = useApp();
   const [inputText, setInputText] = useState("");
   
-  const [showGameDrawer, setShowGameDrawer] = useState(false);
   const [showSecretModal, setShowSecretModal] = useState(false);
   const [showCapsuleModal, setShowCapsuleModal] = useState(false);
+  const [showPetInviteModal, setShowPetInviteModal] = useState(false);
   
   const [secretText, setSecretText] = useState("");
   const [capTitle, setCapTitle] = useState("");
   const [capSecret, setCapSecret] = useState("");
   const [capDays, setCapDays] = useState(30);
+  const [petInviteName, setPetInviteName] = useState("");
+  const [petInviteType, setPetInviteType] = useState<any>("dragon");
   const [reactingMsgId, setReactingMsgId] = useState<string | null>(null);
-
-  // Mini Jogo Arena
-  const [activeMiniGame, setActiveMiniGame] = useState<string | null>(null);
-  const [gameScoreMe, setGameScoreMe] = useState(0);
-  const [gameScoreFriend, setGameScoreFriend] = useState(0);
 
   const activeChat = chats.find((c: any) => c.id === selectedChatId);
 
@@ -49,36 +46,42 @@ export function ChatTab() {
     setShowCapsuleModal(false); setCapTitle(""); setCapSecret("");
   };
 
+  const handleSendPetInviteSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!petInviteName.trim() || !selectedChatId) return;
+    confetti({ particleCount: 50, spread: 70, origin: { y: 0.5 } });
+    sendPetInvite(selectedChatId, petInviteName, petInviteType);
+    setShowPetInviteModal(false);
+  };
+
   const handleSendVoice = () => {
     if (!selectedChatId) return;
     confetti({ particleCount: 20, spread: 40, origin: { y: 0.7 } });
     sendVoiceMessage(selectedChatId, Math.floor(Math.random() * 10) + 5);
   };
 
-  const handleStartGame = (gameType: any, gameName: string) => {
-    if (!selectedChatId) return;
-    sendGameInvite(selectedChatId, gameType, gameName);
-    setShowGameDrawer(false);
-    if (gameType !== "guess_pic" && gameType !== "quiz") {
-      setActiveMiniGame(gameType); setGameScoreMe(0); setGameScoreFriend(0);
+  const handleAcceptPetInvite = (pName: string) => {
+    confetti({ particleCount: 120, spread: 90, origin: { y: 0.4 }, colors: ["#ff5500", "#00f0ff", "#ffd700"] });
+    alert(`🥚💥 PARABÉNS! O ovo rachou!\n\nO mascote 3D "${pName}" nasceu para você e ${activeChat?.name || "seu amigo"} cuidarem em dupla! Acesse a aba 'Mascotes' para alimentá-lo.`);
+    if (user) {
+      const next = { ...user, petId: "pet-my-1" };
+      setUser(next);
+      localStorage.setItem("instants_u_v6", JSON.stringify(next));
     }
   };
 
-  const handlePlayMiniGameStep = () => {
-    setGameScoreMe((prev) => prev + 1);
-    if (Math.random() > 0.4) setGameScoreFriend((prev) => prev + 1);
-    confetti({ particleCount: 15, spread: 30, origin: { y: 0.6 }, colors: ["#00f0ff"] });
-  };
-
-  const gamesList = [
-    { type: "guess_pic", name: "Quem Mandou a Foto? 🕵️‍♂️📸", desc: "Votação funcional anônima" },
-    { type: "quiz", name: "Quiz Besties ❓🧠", desc: "Perguntas exclusivas sobre vocês" },
-    { type: "pingpong", name: "Ping Pong Neon 🏓", desc: "Rebata a bola em velocidade turbo" },
-    { type: "soccer", name: "Pênalti Master ⚽️", desc: "Chute no ângulo" },
-    { type: "space", name: "Guerra Espacial 🚀👾", desc: "Destrua naves invasoras" },
-  ];
-
   const reactionEmojis = ["❤️", "🔥", "🚀", "💩", "⚡️", "💜"];
+
+  const petVarieties = [
+    { id: "dragon", icon: "🐉", name: "Dragão" },
+    { id: "tiger", icon: "🐯", name: "Tigre" },
+    { id: "wolf", icon: "🐺", name: "Lobo" },
+    { id: "panther", icon: "🐆", name: "Pantera" },
+    { id: "cat", icon: "🐱", name: "Gato" },
+    { id: "fox", icon: "🦊", name: "Raposa" },
+    { id: "owl", icon: "🦉", name: "Coruja" },
+    { id: "panda", icon: "🐼", name: "Panda" }
+  ];
 
   return (
     <div className="mx-auto max-w-md pb-24 pt-2 px-3 min-h-[80vh]">
@@ -86,7 +89,7 @@ export function ChatTab() {
         {!activeChat ? (
           <motion.div key="chat-list" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
             <div className="flex items-center justify-between px-1">
-              <h2 className="text-lg font-black text-white">Mensagens & Salas 🎉💬</h2>
+              <h2 className="text-lg font-black text-white">Mensagens & Festas 🎉💬</h2>
               <span className="text-xs font-bold text-neutral-400">{chats.length} chats ativos</span>
             </div>
 
@@ -133,24 +136,32 @@ export function ChatTab() {
         ) : (
           <motion.div key="chat-room" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="flex flex-col h-[78vh] bg-dark-card/60 rounded-3xl border border-white/10 overflow-hidden shadow-2xl backdrop-blur-xl relative">
             <div className="flex items-center justify-between p-3 border-b border-white/10 bg-dark-card/95">
-              <div className="flex items-center space-x-2.5">
-                <button onClick={() => { setSelectedChatId(null); setActiveMiniGame(null); }} className="rounded-full p-1 text-neutral-300 hover:bg-white/10"><ArrowLeft className="h-5 w-5" /></button>
+              <div className="flex items-center space-x-2">
+                <button onClick={() => setSelectedChatId(null)} className="rounded-full p-1 text-neutral-300 hover:bg-white/10"><ArrowLeft className="h-5 w-5" /></button>
                 <img src={activeChat.avatar} alt={activeChat.name} className="h-9 w-9 rounded-full object-cover" />
                 <div>
                   <div className="flex items-center space-x-1">
                     <h3 className="text-xs font-bold text-white">{activeChat.name}</h3>
-                    {activeChat.isTemporaryRoom ? <span className="text-[9px] bg-neon-pink px-1 rounded text-white font-black">Festa 🪩</span> : <span className="text-[10px] text-neon-pink font-black">Nvl {activeChat.friendshipLevel} 💖</span>}
+                    <span className="text-[10px] text-neon-pink font-black">Nvl {activeChat.friendshipLevel} 💖</span>
                   </div>
-                  <p className="text-[9px] text-emerald-400 font-medium">Ranking Besties Privado 🏆</p>
+                  <p className="text-[9px] text-emerald-400 font-medium">Besties Cibernéticos ✨</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-1">
-                <button onClick={() => triggerAiMemory(activeChat.id)} className="flex items-center space-x-1 rounded-xl bg-neon-purple/20 border border-neon-purple/40 px-2 py-1 text-[10px] font-black text-neon-purple hover:scale-105">
-                  <Film className="h-3.5 w-3.5 animate-spin" />
-                  <span>IA Vídeo</span>
+              {!user?.petId && (
+                <button
+                  onClick={() => setShowPetInviteModal(true)}
+                  className="flex items-center space-x-1 rounded-xl bg-gradient-to-r from-fire to-amber-500 px-2.5 py-1.5 text-[10px] font-black text-dark-bg shadow-md animate-bounce"
+                >
+                  <Egg className="h-3.5 w-3.5" />
+                  <span>Criar Pet Dupla 🥚</span>
                 </button>
-              </div>
+              )}
+
+              <button onClick={() => triggerAiMemory(activeChat.id)} className="flex items-center space-x-1 rounded-xl bg-neon-purple/20 border border-neon-purple/40 px-2 py-1 text-[10px] font-black text-neon-purple ml-1">
+                <Film className="h-3.5 w-3.5 animate-spin" />
+                <span>IA Vídeo</span>
+              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -162,34 +173,36 @@ export function ChatTab() {
                       msg.isMe ? "bg-gradient-to-tr from-fire to-fire-glow text-white rounded-br-xs font-medium" : "bg-dark-elevated border border-white/10 text-neutral-200 rounded-bl-xs"
                     }`}
                   >
-                    {/* JOGO FUNCIONAL: QUEM MANDOU A FOTO? */}
+                    {msg.petInvite && (
+                      <div className="rounded-2xl bg-black/80 p-4 border-2 border-fire space-y-2.5 text-center min-w-[210px] my-1 shadow-xl">
+                        <span className="text-4xl block animate-bounce">🥚🐣</span>
+                        <p className="text-xs font-black text-fire-light uppercase tracking-wider">Convite Tamagotchi em Dupla</p>
+                        <p className="text-[11px] text-neutral-200">
+                          <strong>{msg.petInvite.senderName || activeChat?.name || "Amigo"}</strong> te convidou para chocarem e cuidarem juntos do mascote 3D <strong>"{msg.petInvite.petName}"</strong>!
+                        </p>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleAcceptPetInvite(msg.petInvite.petName); }}
+                          className="w-full rounded-xl bg-gradient-to-r from-fire to-amber-400 py-2.5 text-xs font-black text-dark-bg shadow-[0_0_15px_#ff5500] hover:scale-105 transition-all block mt-2"
+                        >
+                          ACEITAR & NASCER PET 3D 🐾✨
+                        </button>
+                      </div>
+                    )}
+
                     {msg.gameInvite && msg.gameInvite.gameType === "guess_pic" && (
-                      <div className="rounded-2xl bg-black/80 p-3.5 border border-neon-cyan space-y-3 text-center min-w-[230px] my-1">
+                      <div className="rounded-2xl bg-black/85 p-3.5 border border-neon-cyan space-y-3 text-center min-w-[230px] my-1">
                         <div className="flex items-center justify-center space-x-1 text-neon-cyan font-black text-xs">
                           <Eye className="h-4 w-4 animate-bounce" />
-                          <span>Votação: Quem Mandou a Foto? 🕵️‍♂️📸</span>
+                          <span>Jogo: Quem Tirou a Foto? 🕵️‍♂️📸</span>
                         </div>
+                        <p className="text-[10px] text-neutral-300">Olhe a foto abaixo e adivinhe quem do squad disparou!</p>
 
-                        {/* Foto Anônima Borrada vs Revelada */}
                         <div className="relative aspect-square rounded-xl overflow-hidden border border-white/20">
-                          <img
-                            src={msg.gameInvite.anonPhotoUrl}
-                            alt="Anon Pic"
-                            className={`w-full h-full object-cover transition-all duration-700 ${
-                              msg.gameInvite.status === "finished" ? "blur-none brightness-100 scale-105" : "blur-md brightness-75 select-none"
-                            }`}
-                          />
-                          {msg.gameInvite.status !== "finished" && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-[10px] font-black tracking-widest text-white uppercase">
-                              🔒 Foto Anônima Sorteada
-                            </div>
-                          )}
+                          <img src={msg.gameInvite.photoUrl || "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=800&auto=format&fit=crop&q=80"} alt="Guess Pic" className="w-full h-full object-cover" />
                         </div>
 
-                        {/* Área de Votos ao Vivo */}
                         {msg.gameInvite.status !== "finished" ? (
                           <div className="space-y-1.5">
-                            <p className="text-[10px] text-neutral-300 font-bold">Vote em quem você acha que tirou essa foto:</p>
                             <div className="grid grid-cols-2 gap-1.5">
                               {["Sofia Neon", "Alex Cyber", "Lucas Shader", "Bia Cyber"].map((candidate) => {
                                 const votesCount = Object.values(msg.gameInvite.votes || {}).filter((v) => v === candidate).length;
@@ -218,98 +231,85 @@ export function ChatTab() {
                               }}
                               className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-fire py-2 text-[11px] font-black text-dark-bg shadow-md mt-2 block"
                             >
-                              Encerrar Votação & Revelar Autor 👁️
+                              Revelar Resposta & Distribuir XP 🏆
                             </button>
                           </div>
                         ) : (
-                          <div className="rounded-xl bg-emerald-500/20 border border-emerald-500 p-2.5 text-center space-y-1 animate-pulse">
-                            <p className="text-[10px] text-emerald-300 font-bold">🏆 AUTOR REVELADO COM SUCESSO:</p>
+                          <div className="rounded-xl bg-emerald-500/20 border border-emerald-500 p-2.5 text-center space-y-1">
+                            <p className="text-[10px] text-emerald-300 font-bold">🎯 RESPOSTA REVELADA:</p>
                             <p className="text-xs font-black text-white">{msg.gameInvite.revealedAuthor}</p>
-                            <p className="text-[9px] text-neutral-300">+300 XP distribuídos para quem acertou!</p>
                           </div>
                         )}
                       </div>
                     )}
 
-                    {/* QUIZ FUNCIONAL */}
-                    {msg.gameInvite && msg.gameInvite.gameType === "quiz" && (
-                      <div className="rounded-2xl bg-dark-bg/90 p-3.5 border border-neon-purple space-y-2 text-center min-w-[210px] my-1">
-                        <p className="text-neon-purple font-black text-xs">❓ Quiz Besties</p>
-                        <p className="text-xs font-bold text-white">{msg.gameInvite.question}</p>
-                        <div className="space-y-1 pt-1">
-                          {msg.gameInvite.options?.map((opt: string, i: number) => (
-                            <button key={i} onClick={(e) => { e.stopPropagation(); confetti({ particleCount: 30, spread: 50, origin: { y: 0.6 } }); alert("Acertou em cheio! +100 XP de amizade"); }} className="w-full p-2 rounded-xl bg-dark-card hover:bg-neon-purple text-xs font-black text-left">{opt}</button>
-                          ))}
-                        </div>
-                      </div>
+                    {msg.mediaType === "voice" && msg.voiceMessage && (
+                      <div className="flex items-center space-x-2 py-1 min-w-[150px]"><button onClick={() => alert("▶️ Áudio")} className="p-1.5 bg-white/20 rounded-full"><Play className="h-3.5 w-3.5 fill-white" /></button><span className="font-mono text-[10px]">{msg.voiceMessage.duration}s</span></div>
                     )}
 
-                    {/* CÁPSULA */}
-                    {msg.timeCapsule && (
-                      <div className="rounded-xl bg-black/60 p-3 border border-amber-500 text-center min-w-[190px] my-1"><p className="text-amber-400 font-black text-xs">🔒 Cápsula Selada ({msg.timeCapsule.unlockDate})</p><p className="text-xs font-bold text-white mt-1">{msg.timeCapsule.title}</p></div>
+                    {msg.mediaType === "secret_once" && msg.secretMessage && (
+                      <div className="p-2.5 bg-black/70 border border-red-500 rounded-xl text-center"><p className="text-[10px] text-red-400 font-black">💣 Secreta (1x)</p><button onClick={() => { alert(`💣 "${msg.secretMessage.text}"`); viewSecretMessage(activeChat.id, msg.id); }} className="mt-1 px-2 py-1 bg-red-500/30 text-[10px] rounded text-white font-black">Abrir</button></div>
                     )}
 
-                    {msg.mediaUrl && !msg.timeCapsule && msg.mediaType !== "ai_memory" && (
+                    {msg.mediaUrl && msg.mediaType !== "secret_once" && !msg.timeCapsule && !msg.gameInvite && (
                       <div className="mb-2 overflow-hidden rounded-xl border border-white/20"><img src={msg.mediaUrl} alt="sent" className="w-full max-h-48 object-cover" /></div>
                     )}
 
                     {msg.text && <p className="leading-relaxed">{msg.text}</p>}
                   </div>
 
-                  {/* Popover Emojis */}
-                  <AnimatePresence>
-                    {reactingMsgId === msg.id && (
-                      <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} className="absolute -top-10 z-50 flex items-center space-x-1 bg-dark-card p-1.5 rounded-full border border-white/20 shadow-2xl">
-                        {reactionEmojis.map((emj) => (<button key={emj} onClick={() => { reactToMessage(activeChat.id, msg.id, emj); setReactingMsgId(null); }} className="p-1 text-base hover:scale-125">{emj}</button>))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  {reactingMsgId === msg.id && (
+                    <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="absolute -top-10 z-50 flex space-x-1 bg-dark-card p-1.5 rounded-full border border-white/20 shadow-2xl">
+                      {reactionEmojis.map((emj) => (<button key={emj} onClick={() => { reactToMessage(activeChat.id, msg.id, emj); setReactingMsgId(null); }} className="p-1 text-base">{emj}</button>))}
+                    </motion.div>
+                  )}
                   <span className="text-[8px] text-neutral-500 mt-1 px-1">{msg.timestamp}</span>
                 </div>
               ))}
             </div>
 
-            {/* OVERLAY MINI JOGO */}
+            <div className="p-3 border-t border-white/10 bg-dark-card/95 space-y-2">
+              <div className="flex items-center space-x-1.5">
+                <button onClick={handleSendVoice} className="p-2 rounded-xl bg-neon-purple/20 text-neon-purple font-black text-xs"><Mic className="h-4 w-4" /></button>
+                <button onClick={() => setShowSecretModal(true)} className="p-2 rounded-xl bg-red-500/20 text-red-400 font-black text-xs"><Bomb className="h-4 w-4" /></button>
+                <button onClick={() => setShowCapsuleModal(true)} className="p-2 rounded-xl bg-amber-500/20 text-amber-400 font-black text-xs"><Clock className="h-4 w-4" /></button>
+                
+                <button
+                  onClick={() => sendGameInvite(activeChat.id, "guess_pic", "Quem Tirou a Foto? 🕵️‍♂️📸")}
+                  className="flex items-center space-x-1 rounded-xl bg-neon-cyan/20 border border-neon-cyan/40 px-2.5 py-2 text-xs font-black text-neon-cyan hover:bg-neon-cyan/30"
+                  title="Mandar Desafio: Quem Tirou a Foto?"
+                >
+                  <Eye className="h-4 w-4" />
+                  <span className="hidden sm:inline">Foto Jogo</span>
+                </button>
+
+                <input type="text" placeholder="Escreva..." value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSend()} className="flex-1 rounded-xl bg-dark-elevated border border-white/15 px-3 py-2 text-xs text-white focus:outline-hidden" />
+                <button onClick={handleSend} className="rounded-xl bg-fire p-2 text-white"><Send className="h-4 w-4" /></button>
+              </div>
+            </div>
+
             <AnimatePresence>
-              {activeMiniGame && (
-                <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="absolute inset-x-0 bottom-0 top-12 z-50 bg-dark-bg/95 p-4 flex flex-col justify-between border-t border-neon-cyan">
-                  <div className="flex justify-between items-center border-b border-white/10 pb-2"><h4 className="text-xs font-black text-neon-cyan">Arena Duelo</h4><button onClick={() => setActiveMiniGame(null)}><X className="h-5 w-5" /></button></div>
-                  <div className="text-center space-y-4 my-auto"><p className="text-4xl font-black text-white">{gameScoreMe} VS {gameScoreFriend}</p><button onClick={handlePlayMiniGameStep} className="w-full py-4 rounded-2xl bg-neon-cyan text-dark-bg font-black text-base">JOGAR ⚡️ (+1 pt)</button></div>
+              {showPetInviteModal && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 bg-black/90 p-6 flex flex-col justify-center text-left">
+                  <form onSubmit={handleSendPetInviteSubmit} className="space-y-4 bg-dark-card p-5 rounded-3xl border-2 border-fire shadow-2xl">
+                    <div className="flex justify-between"><h4 className="text-sm font-black text-fire flex items-center space-x-1"><Egg className="h-4 w-4" /><span>Convidar Pet em Dupla 🥚</span></h4><button type="button" onClick={() => setShowPetInviteModal(false)}><X className="h-4 w-4 text-neutral-400" /></button></div>
+                    <p className="text-[11px] text-neutral-300">Escolha a espécie que você e {activeChat?.name || "Amigo"} chocarão e cuidarão todos os dias:</p>
+                    <div className="grid grid-cols-4 gap-1.5 max-h-40 overflow-y-auto">
+                      {petVarieties.map((p) => (<button type="button" key={p.id} onClick={() => setPetInviteType(p.id)} className={`p-1.5 rounded-xl border flex flex-col items-center ${petInviteType === p.id ? "bg-fire/20 border-fire scale-105" : "bg-dark-elevated border-white/10 opacity-60"}`}><span className="text-lg">{p.icon}</span><span className="text-[8px] font-bold text-white mt-0.5">{p.name}</span></button>))}
+                    </div>
+                    <input type="text" required placeholder="Nome do futuro mascote (Ex: Quasar)" value={petInviteName} onChange={(e) => setPetInviteName(e.target.value)} className="w-full bg-dark-elevated rounded-xl p-2.5 text-xs text-white" />
+                    <button type="submit" className="w-full py-3 bg-gradient-to-r from-fire to-amber-500 rounded-xl text-dark-bg font-black text-xs shadow-lg">Enviar Convite no Chat 💌</button>
+                  </form>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Bottom bar */}
-            <div className="p-3 border-t border-white/10 bg-dark-card/95 space-y-2">
-              <div className="flex items-center space-x-1.5">
-                <button onClick={handleSendVoice} className="p-2 rounded-xl bg-neon-purple/20 text-neon-purple font-black text-xs" title="Áudio Rápido"><Mic className="h-4 w-4" /></button>
-                <button onClick={() => setShowSecretModal(true)} className="p-2 rounded-xl bg-red-500/20 text-red-400 font-black text-xs" title="View Once"><Bomb className="h-4 w-4" /></button>
-                <button onClick={() => setShowCapsuleModal(true)} className="p-2 rounded-xl bg-amber-500/20 text-amber-400 font-black text-xs" title="Cápsula"><Clock className="h-4 w-4" /></button>
-                <button onClick={() => setShowGameDrawer(!showGameDrawer)} className="p-2 rounded-xl bg-neon-cyan/20 text-neon-cyan font-black text-xs"><Gamepad2 className="h-4 w-4" /></button>
-                <input type="text" placeholder="Escreva..." value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSend()} className="flex-1 rounded-xl bg-dark-elevated border border-white/15 px-3 py-2 text-xs text-white focus:outline-hidden" />
-                <button onClick={handleSend} className="rounded-xl bg-fire p-2 text-white"><Send className="h-4 w-4" /></button>
-              </div>
-
-              <AnimatePresence>
-                {showGameDrawer && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="pt-2 border-t border-white/10 grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-                    {gamesList.map((g) => (<button key={g.type} onClick={() => handleStartGame(g.type, g.name)} className="rounded-xl bg-dark-elevated p-2 border border-white/10 text-left hover:border-neon-cyan"><span className="text-xs font-bold text-white block">{g.name}</span><span className="text-[9px] text-neutral-400">{g.desc}</span></button>))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* MODAIS GERAIS */}
             <AnimatePresence>
-              {showSecretModal && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 bg-black/90 p-6 flex flex-col justify-center"><form onSubmit={(e) => { e.preventDefault(); sendSecretViewOnce(activeChat.id, secretText); setShowSecretModal(false); }} className="space-y-4 bg-dark-card p-5 rounded-3xl border border-red-500"><div className="flex justify-between"><h4 className="text-sm font-black text-red-400">Mensagem Secreta 1x 💣</h4><button type="button" onClick={() => setShowSecretModal(false)}><X className="h-4 w-4" /></button></div><textarea required placeholder="Segredo..." value={secretText} onChange={(e) => setSecretText(e.target.value)} className="w-full h-20 bg-dark-elevated rounded-xl p-3 text-xs text-white" /><button type="submit" className="w-full py-3 bg-red-500 rounded-xl text-white font-black text-xs">Enviar View Once</button></form></motion.div>
-              )}
+              {showSecretModal && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 bg-black/90 p-6 flex flex-col justify-center"><form onSubmit={(e) => { e.preventDefault(); sendSecretViewOnce(activeChat.id, secretText); setShowSecretModal(false); }} className="space-y-4 bg-dark-card p-5 rounded-3xl border border-red-500"><div className="flex justify-between"><h4 className="text-sm font-black text-red-400">View Once 💣</h4><button type="button" onClick={() => setShowSecretModal(false)}><X className="h-4 w-4" /></button></div><textarea required placeholder="Segredo..." value={secretText} onChange={(e) => setSecretText(e.target.value)} className="w-full h-20 bg-dark-elevated rounded-xl p-3 text-xs text-white" /><button type="submit" className="w-full py-3 bg-red-500 rounded-xl text-white font-black text-xs">Enviar 1x</button></form></motion.div>)}
             </AnimatePresence>
 
             <AnimatePresence>
-              {showCapsuleModal && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 bg-black/90 p-6 flex flex-col justify-center"><form onSubmit={(e) => { e.preventDefault(); sendTimeCapsule(activeChat.id, capTitle, capSecret, capDays); setShowCapsuleModal(false); }} className="space-y-4 bg-dark-card p-5 rounded-3xl border border-amber-500"><div className="flex justify-between"><h4 className="text-sm font-black text-amber-400">Cápsula do Tempo ⏳</h4><button type="button" onClick={() => setShowCapsuleModal(false)}><X className="h-4 w-4" /></button></div><input type="text" required placeholder="Título..." value={capTitle} onChange={(e) => setCapTitle(e.target.value)} className="w-full bg-dark-elevated rounded-xl p-2.5 text-xs text-white" /><textarea placeholder="Mensagem..." value={capSecret} onChange={(e) => setCapSecret(e.target.value)} className="w-full h-16 bg-dark-elevated rounded-xl p-3 text-xs text-white" /><div className="flex space-x-2"><button type="button" onClick={() => setCapDays(30)} className={`flex-1 py-1.5 rounded-lg text-xs font-bold ${capDays === 30 ? "bg-amber-500 text-dark-bg" : "bg-dark-elevated"}`}>1 Mês</button><button type="button" onClick={() => setCapDays(365)} className={`flex-1 py-1.5 rounded-lg text-xs font-bold ${capDays === 365 ? "bg-amber-500 text-dark-bg" : "bg-dark-elevated"}`}>1 Ano</button></div><button type="submit" className="w-full py-3 bg-amber-500 rounded-xl text-dark-bg font-black text-xs">Selar & Enviar 🔒</button></form></motion.div>
-              )}
+              {showCapsuleModal && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 bg-black/90 p-6 flex flex-col justify-center"><form onSubmit={(e) => { e.preventDefault(); sendTimeCapsule(activeChat.id, capTitle, capSecret, capDays); setShowCapsuleModal(false); }} className="space-y-4 bg-dark-card p-5 rounded-3xl border border-amber-500"><div className="flex justify-between"><h4 className="text-sm font-black text-amber-400">Cápsula ⏳</h4><button type="button" onClick={() => setShowCapsuleModal(false)}><X className="h-4 w-4" /></button></div><input type="text" required placeholder="Título..." value={capTitle} onChange={(e) => setCapTitle(e.target.value)} className="w-full bg-dark-elevated rounded-xl p-2.5 text-xs text-white" /><textarea placeholder="Mensagem..." value={capSecret} onChange={(e) => setCapSecret(e.target.value)} className="w-full h-16 bg-dark-elevated rounded-xl p-3 text-xs text-white" /><button type="submit" className="w-full py-3 bg-amber-500 rounded-xl text-dark-bg font-black text-xs">Trancar & Enviar 🔒</button></form></motion.div>)}
             </AnimatePresence>
           </motion.div>
         )}

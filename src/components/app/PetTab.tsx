@@ -2,13 +2,13 @@
 
 import React, { useState } from "react";
 import { useApp } from "../providers/Providers";
-import { Sparkles, Utensils, Shirt, Users, Dna, Star, Check } from "lucide-react";
+import { Sparkles, Utensils, Dna, Star, Users, Egg } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Pet3D } from "../canvas/Pet3D";
 
 export function PetTab() {
-  const { pet, feedPet, playPet, cleanPet, sleepPet, updatePetStyle, chats, sendPetInvite, breedPets } = useApp();
+  const { user, pet, feedPet, playPet, cleanPet, sleepPet, updatePetStyle, chats, sendPetInvite, breedPets, setActiveTab } = useApp();
   const [activeMenu, setActiveMenu] = useState<"care" | "style" | "coop" | "breed">("care");
   const [hybridName, setHybridName] = useState("");
 
@@ -22,9 +22,50 @@ export function PetTab() {
     setHybridName("");
   };
 
+  // SE AINDA NÃO TEM PET CHOCADO EM DUPLA NO CHAT
+  if (!user?.petId) {
+    return (
+      <div className="mx-auto max-w-md pb-28 pt-12 px-4 text-center space-y-6">
+        <motion.div
+          animate={{ scale: [1, 1.08, 1], rotate: [0, -5, 5, 0] }}
+          transition={{ duration: 4, repeat: Infinity }}
+          className="mx-auto h-40 w-40 rounded-full bg-gradient-to-tr from-fire/30 via-neon-purple/40 to-blue-600/30 border-2 border-fire/50 flex items-center justify-center p-6 shadow-2xl backdrop-blur-xl relative"
+        >
+          <Egg className="h-20 w-20 text-fire-light animate-pulse" />
+        </motion.div>
+
+        <div className="space-y-2">
+          <h2 className="text-xl font-black text-white">Você Ainda Não Tem um Mascote! 🐾🥚</h2>
+          <p className="text-xs text-neutral-300 max-w-xs mx-auto leading-relaxed">
+            No universo sério do <strong className="text-white">Instants</strong>, o pet não nasce sozinho no cadastro. <strong>Ele só nasce quando duas pessoas aceitam cuidar dele juntas pelo Chat!</strong>
+          </p>
+        </div>
+
+        <div className="rounded-3xl bg-dark-card border border-white/10 p-5 space-y-3 shadow-xl text-left">
+          <h3 className="text-xs font-black uppercase text-neon-cyan flex items-center space-x-1.5">
+            <Users className="h-4 w-4" />
+            <span>Como chocar seu ovo em dupla agora:</span>
+          </h3>
+          <ol className="list-decimal list-inside space-y-1.5 text-xs text-neutral-300">
+            <li>Abra a aba <strong className="text-white">Chat 💬</strong> na barra inferior.</li>
+            <li>Entre na conversa privada com seu amigo favorito.</li>
+            <li>Clique no botão <strong className="text-fire">"Convidar Pet Dupla 💌"</strong>.</li>
+            <li>Assim que ele aceitar, o mascote 3D realista nascerá para vocês dois!</li>
+          </ol>
+          <button
+            onClick={() => setActiveTab("chat")}
+            className="w-full rounded-2xl bg-gradient-to-r from-fire via-fire-glow to-neon-purple py-3.5 text-xs font-black text-white shadow-lg mt-2"
+          >
+            Ir para o Chat Agora 💬🚀
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // SE JÁ POSSUI PET CO-OP
   return (
     <div className="mx-auto max-w-md pb-28 pt-3 px-3 space-y-4 text-center">
-      {/* Top Banner Status */}
       <div className="rounded-2xl bg-dark-card border border-white/10 p-3 shadow-lg flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <div className="flex -space-x-2">
@@ -47,13 +88,12 @@ export function PetTab() {
         </span>
       </div>
 
-      {/* ARENA CENTRAL DO PET EM THREE.JS 3D */}
       <div className="relative aspect-square w-full rounded-3xl bg-gradient-to-b from-dark-elevated via-dark-card to-dark-bg border border-white/15 p-4 shadow-2xl overflow-hidden flex flex-col items-center justify-center">
         <div className="absolute inset-0 bg-[radial-gradient(#ff5500_1px,transparent_1px)] [background-size:16px_16px] opacity-15 pointer-events-none" />
 
         <div className="absolute top-3 left-4 right-4 z-10 flex justify-between items-center pointer-events-none">
           <span className="text-[9px] uppercase font-black tracking-widest text-neutral-400 bg-black/40 px-2.5 py-1 rounded-full border border-white/10">
-            Arraste para rotacionar 3D
+            Gráficos 3D Realistas
           </span>
           <span className="text-xs">
             {pet.hat === "crown" && "👑"}
@@ -61,12 +101,10 @@ export function PetTab() {
           </span>
         </div>
 
-        {/* MOTOR GRÁFICO R3F / THREE.JS */}
         <div className="h-full w-full">
           <Pet3D pet={pet} />
         </div>
 
-        {/* Barras de Status Vitais */}
         <div className="absolute bottom-3 left-3 right-3 grid grid-cols-4 gap-1 bg-black/70 backdrop-blur-xl p-2.5 rounded-2xl border border-white/10 z-10">
           <div><p className="text-[9px] uppercase font-bold text-neutral-400">Fome</p><div className="h-1.5 w-full bg-white/10 rounded-full mt-1 overflow-hidden"><div className="h-full bg-amber-500" style={{ width: `${pet.hunger}%` }} /></div></div>
           <div><p className="text-[9px] uppercase font-bold text-neutral-400">Amor</p><div className="h-1.5 w-full bg-white/10 rounded-full mt-1 overflow-hidden"><div className="h-full bg-neon-pink" style={{ width: `${pet.happiness}%` }} /></div></div>
@@ -75,7 +113,6 @@ export function PetTab() {
         </div>
       </div>
 
-      {/* Selector de Abas do Pet */}
       <div className="flex justify-center space-x-1.5 bg-dark-card p-1 rounded-2xl border border-white/10">
         {[
           { id: "care", label: "Cuidar 🍗" },

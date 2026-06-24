@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, resetRateLimit, hashPasswordSec, sanitizeSqlAndXss } from "@/lib/security";
-
-(global as any)._instants_users_db = (global as any)._instants_users_db || new Map();
+import { initDb, findUserByHandleOrPhone } from "@/lib/db";
 
 export async function POST(req: Request) {
   try {
+    await initDb();
     const body = await req.json();
     const { identifier, password } = body;
 
@@ -19,15 +19,15 @@ export async function POST(req: Request) {
     const rateLimit = checkRateLimit(searchKey, 5, 15);
     if (!rateLimit.allowed) {
       return NextResponse.json({
-        error: `🚫 BLOQUEIO DE SEGURANÇA: Muitas tentativas erradas. Sua conta/IP foi temporariamente suspensa contra ataques de Força Bruta. Aguarde ${rateLimit.waitMin} minutos.`
+        error: `🚫 BLOQUEIO ANTI-FORÇA BRUTA: Muitas tentativas erradas. Sua conta/IP foi temporariamente suspensa por segurança. Aguarde ${rateLimit.waitMin} minutos.`
       }, { status: 429 });
     }
 
-    const db = (global as any)._instants_users_db as Map<string, any>;
-    const userRecord = db.get(searchKey) || db.get(cleanPhone);
+    const userRecord = await findUserByHandleOrPhone(searchKey, cleanPhone);
 
     if (!userRecord) {
-      if (password.length >= 6) {
+      // Demo rápido opcional se digitar senha de teste válida
+      if (password === "123456" || password === "admin123") {
         resetRateLimit(searchKey);
         const demoUser = {
           id: `usr-${Date.now()}`,
@@ -36,9 +36,9 @@ export async function POST(req: Request) {
           phone: cleanPhone || "+5511999999999",
           image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
           streak: 28,
-          instantsCount: 142
+          instantsCount: 142,
+          petId: null
         };
-        db.set(searchKey, demoUser);
         return NextResponse.json({ success: true, user: demoUser });
       }
 
@@ -46,7 +46,8 @@ export async function POST(req: Request) {
     }
 
     const passwordHash = hashPasswordSec(password);
-    if (userRecord.passwordHash && userRecord.passwordHash !== passwordHash) {
+    const dbHash = userRecord.password_hash || userRecord.passwordHash;
+    if (dbHash && dbHash !== passwordHash) {
       return NextResponse.json({ error: "Senha incorreta. Atenção: restam poucas tentativas antes do bloqueio por Força Bruta." }, { status: 401 });
     }
 
@@ -58,12 +59,13 @@ export async function POST(req: Request) {
         id: userRecord.id,
         name: userRecord.name,
         handle: userRecord.handle,
-        phone: userRecord.phone,
-        image: userRecord.image,
-        streak: userRecord.streak
+        phone: userRecord.phone || cleanPhone,
+        image: userRecord.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
+        streak: userRecord.streak || 28,
+        petId: userRecord.pet_id || userRecord.petId || null
       }
     });
   } catch (err) {
-    return NextResponse.json({ error: "Falha na validação de login do servidor." }, { status: 500 });
+    return NextResponse.json({ error: "Falha no servidor de login." }, { status: 500 });
   }
 }

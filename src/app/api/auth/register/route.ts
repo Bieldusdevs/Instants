@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { sanitizeSqlAndXss, isValidPhoneNumber, hashPasswordSec, moderateMessage } from "@/lib/security";
-
-(global as any)._instants_users_db = (global as any)._instants_users_db || new Map();
+import { initDb, findUserByHandleOrPhone, insertUserDb } from "@/lib/db";
 
 export async function POST(req: Request) {
   try {
+    await initDb();
     const body = await req.json();
-    const { name, handle, phone, password, petName, petType } = body;
+    const { name, handle, phone, password } = body;
 
+    // 1. OBRIGATÓRIO NÚMERO DE TELEFONE
     if (!phone || !isValidPhoneNumber(phone)) {
-      return NextResponse.json({ error: "Número de telefone obrigatório ou em formato inválido. Use DDD + Telefone (Ex: +55 11 99999-9999)." }, { status: 400 });
+      return NextResponse.json({ error: "Telefone obrigatório ou em formato inválido. Digite DDD + Número (Ex: +55 11 99999-9999)." }, { status: 400 });
     }
 
     const safeName = sanitizeSqlAndXss(name);
@@ -23,12 +24,13 @@ export async function POST(req: Request) {
     const modName = moderateMessage(safeName);
     const modHandle = moderateMessage(safeHandle);
     if (!modName.isSafe || !modHandle.isSafe) {
-      return NextResponse.json({ error: "O nome ou apelido contém termos impróprios barrados pela moderação." }, { status: 403 });
+      return NextResponse.json({ error: "O nome ou handle contém termos impróprios barrados pela moderação." }, { status: 403 });
     }
 
-    const db = (global as any)._instants_users_db as Map<string, any>;
-    if (db.has(`@${safeHandle}`) || db.has(cleanPhone)) {
-      return NextResponse.json({ error: "Este @handle ou número de telefone já está cadastrado no sistema." }, { status: 409 });
+    // 2. REGRA DE INTEGRIDADE SÉRIA: USUÁRIO ÚNICO E TELEFONE ÚNICO (UNIQUE)
+    const existing = await findUserByHandleOrPhone(`@${safeHandle}`, cleanPhone);
+    if (existing) {
+      return NextResponse.json({ error: "Violação de regra no banco de dados: Este @handle ou número de telefone já possui cadastro único no sistema." }, { status: 409 });
     }
 
     const passwordHash = hashPasswordSec(password);
@@ -42,25 +44,35 @@ export async function POST(req: Request) {
       image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
       streak: 1,
       instantsCount: 0,
-      createdAt: new Date().toISOString()
+      petId: null, // Mascote NÃO nasce aqui!
+      followersCount: 100,
+      followingCount: 100,
+      bio: "Explorador no Instants ✨"
     };
 
-    db.set(`@${safeHandle}`, newUserRecord);
-    db.set(cleanPhone, newUserRecord);
+    try {
+      await insertUserDb(newUserRecord);
+    } catch (dbErr: any) {
+      if (dbErr.code === "23505" || dbErr.message?.includes("Unique")) {
+        return NextResponse.json({ error: "Violação UNIQUE constraint: Só é permitido 1 cadastro por número de telefone e handle." }, { status: 409 });
+      }
+      throw dbErr;
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Usuário cadastrado com segurança de nível bancário!",
+      message: "Conta criada com sucesso! Você entrou sem mascote. Convide um amigo no chat para criarem um pet em dupla!",
       user: {
         id: newUserRecord.id,
         name: newUserRecord.name,
         handle: newUserRecord.handle,
         phone: newUserRecord.phone,
         image: newUserRecord.image,
-        streak: newUserRecord.streak
+        streak: newUserRecord.streak,
+        petId: null
       }
     });
   } catch (err) {
-    return NextResponse.json({ error: "Erro interno no servidor de banco de dados." }, { status: 500 });
+    return NextResponse.json({ error: "Erro interno no servidor SQL." }, { status: 500 });
   }
 }

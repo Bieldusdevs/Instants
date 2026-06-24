@@ -1,43 +1,29 @@
-# Instants ✨ - A Rede Social Gamificada PWA 3D Profissional
+# Instants ✨ - Rede Social PWA 3D de Escala Global
 
-O **Instants** atingiu o ápice absoluto de design moderno, engenharia 3D e retenção social. Pronto para ser utilizado por milhares de usuários concorrentes na Vercel com máxima latência e segurança.
-
----
-
-## 🌟 O Que Há de Novo Nesta Versão Definitiva
-
-1. **🐉 Pets 3D Realistas + Roupinhas 3D (React Three Fiber / Three.js)**:
-   - Os Tamagotchis virtuais deixaram de ser emojis estáticos! Renderizados em tempo real em motor WebGL/WebGPU 3D com malhas geométricas pulsantes, respiração orgánica, iluminação de estúdio GLSL, sombras e acessórios 3D reais *(Coroa de ouro metálica 3D, Chapéu de Mago 3D e Óculos Cyber translúcidos 3D)*.
-
-2. **🕵️‍♂️📸 Jogos Funcionais Multiplayer no Chat**:
-   - **Quem Mandou a Foto?**: O sistema sorteia um anônimo no grupo, posta uma foto secreta selada com blur e abre um **painel de votação ao vivo** na conversa. Ao encerrar a votação, a foto é revelada com confetti e XP!
-   - **Ping Pong Neon & Pênalti Master**: Arenas funcionais prontas para duelos.
-
-3. **👤 Bio Customizada & Sistema de Seguidores**:
-   - Edite a sua Bio pessoal *(Ex: "Artísta 3D & viciado em café 🪐")*.
-   - Contadores de **Seguidores** e **Seguindo**.
-
-4. **🔒 Criptografia Bancária & Moderação por IA**:
-   - Obrigatório cadastrar com Número de Telefone validado.
-   - Escudo Anti-Força Bruta no login e sanitização anti-SQL Injection.
-   - Moderação anti-toxicidade interceptando termos ofensivos no servidor.
+O **Instants** evoluiu para sua versão final de produção corporativa na nuvem, configurado para receber milhares de acessos simultâneos na Vercel.
 
 ---
 
-## 🛠️ Tecnologias de Elite
+## 🛡️ Regras de Banco de Dados & Criptografia (Vercel Postgres SQL)
 
-- **Next.js 14** (App Router Serverless com API Routes dinâmicas)
-- **React Three Fiber & Three.js** (Renderização 3D de alta performance 60fps)
-- **GSAP & Custom Cursor** (Rastro magnético inteligente)
-- **Framer Motion & Canvas Confetti** (Animações de interface e gestos)
-- **PWA Standalone Engine** (Manifest, Service Worker e ícones prontos pro celular)
+1. **Integridade Única (UNIQUE CONSTRAINT)**:
+   - Estruturado com o SDK oficial `@vercel/postgres`. O sistema garante estritamente **apenas 1 conta por Número de Celular (`phone` UNIQUE)** e **apenas 1 Apelido por usuário (`handle` UNIQUE)**.
+
+2. **Mascote Nascendo Apenas no Chat 🐾💌**:
+   - Na criação de conta, o usuário entra de mãos vazias. **O Mascote Virtual 3D NÃO nasce no cadastro!** Ele só é gerado quando um usuário entra no chat privado com um amigo e envia o convite *"Chocar Ovo Tamagotchi em Dupla 🥚💌"*. Ao aceitar, o bichinho realista nasce para ambos cuidarem em cooperação!
+
+3. **Jogo Exclusivo: Descubra Quem Tirou a Foto 🕵️‍♂️📸**:
+   - A lista de jogos do chat foi limpa para manter foco total no maior engajador social: a foto misteriosa do squad. A imagem aparece 100% nítida e os amigos abrem votação ao vivo na conversa.
+
+4. **12 Variedades de Escultura 3D Realista PBR Nível GTA 5**:
+   - Esculpidos proceduralmente com sombreamento físico de estúdio no Three.js. Inclui Dragão, Tigre Cibernético, Lobo Ártico, Pantera Negra, Panda Espacial e Coruja de Neon.
 
 ---
 
-## 🚀 Publicação Imediata no Vercel
+## 🚀 Como Subir Para Produção no Vercel (Passo a Passo)
 
-1. Baixe o arquivo `instants-pwa-github.zip` e extraia.
-2. Suba o conteúdo extraído para o seu repositório vazio no GitHub.
-3. Importe no [Vercel](https://vercel.com/) e clique em **Deploy**.
-
-*(Nenhuma configuração externa pendente! O banco de dados persistente em memória e os motores 3D já entram no ar funcionando a 1000%!)* 🔥🐾✨
+1. Baixe o arquivo definitivo `instants-pwa-github.zip` e extraia.
+2. Crie um repositório vazio no GitHub e arraste o conteúdo extraído.
+3. No painel do [Vercel](https://vercel.com/), clique em **Add New Project** e importe o repositório.
+4. *(Opcional, para ativar o banco SQL definitivo)*: No menu do projeto no Vercel, vá na aba **Storage** -> **Connect Store** -> **Vercel Postgres** (Neon). Dê um nome e clique em **Create**. Ele injetará automaticamente a variável `POSTGRES_URL` nas configurações!
+5. Clique em **Deploy**! Em 35 segundos seu PWA de nível mundial estará online! 🔥📱🪐
