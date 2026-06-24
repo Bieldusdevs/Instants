@@ -8,9 +8,8 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { name, handle, phone, password } = body;
 
-    // 1. OBRIGATÓRIO NÚMERO DE TELEFONE
     if (!phone || !isValidPhoneNumber(phone)) {
-      return NextResponse.json({ error: "Telefone obrigatório ou em formato inválido. Digite DDD + Número (Ex: +55 11 99999-9999)." }, { status: 400 });
+      return NextResponse.json({ error: "Telefone celular obrigatório ou em formato inválido. Use DDD + Telefone (Ex: +55 11 99999-9999)." }, { status: 400 });
     }
 
     const safeName = sanitizeSqlAndXss(name);
@@ -24,17 +23,17 @@ export async function POST(req: Request) {
     const modName = moderateMessage(safeName);
     const modHandle = moderateMessage(safeHandle);
     if (!modName.isSafe || !modHandle.isSafe) {
-      return NextResponse.json({ error: "O nome ou handle contém termos impróprios barrados pela moderação." }, { status: 403 });
+      return NextResponse.json({ error: "Termo barrado pela moderação anti-toxicidade." }, { status: 403 });
     }
 
-    // 2. REGRA DE INTEGRIDADE SÉRIA: USUÁRIO ÚNICO E TELEFONE ÚNICO (UNIQUE)
     const existing = await findUserByHandleOrPhone(`@${safeHandle}`, cleanPhone);
     if (existing) {
-      return NextResponse.json({ error: "Violação de regra no banco de dados: Este @handle ou número de telefone já possui cadastro único no sistema." }, { status: 409 });
+      return NextResponse.json({ error: "Regra UNIQUE: Este @handle ou telefone celular já possui cadastro único no banco de dados." }, { status: 409 });
     }
 
     const passwordHash = hashPasswordSec(password);
 
+    // CONTA REAL RETIRANDO MODO DEMO: 100% ZERADA E LIMPA
     const newUserRecord = {
       id: `usr-${Date.now()}`,
       name: safeName,
@@ -42,33 +41,37 @@ export async function POST(req: Request) {
       phone: cleanPhone,
       passwordHash,
       image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
-      streak: 1,
+      streak: 1, // Começa no dia 1
       instantsCount: 0,
-      petId: null, // Mascote NÃO nasce aqui!
-      followersCount: 100,
-      followingCount: 100,
-      bio: "Explorador no Instants ✨"
+      petId: null, // Mascote nasce no chat
+      followersCount: 0, // 0 seguidores iniciais!
+      followingCount: 0,
+      bio: "Novo no Instants ✨"
     };
 
     try {
       await insertUserDb(newUserRecord);
     } catch (dbErr: any) {
       if (dbErr.code === "23505" || dbErr.message?.includes("Unique")) {
-        return NextResponse.json({ error: "Violação UNIQUE constraint: Só é permitido 1 cadastro por número de telefone e handle." }, { status: 409 });
+        return NextResponse.json({ error: "Violação UNIQUE constraint no banco de dados." }, { status: 409 });
       }
       throw dbErr;
     }
 
     return NextResponse.json({
       success: true,
-      message: "Conta criada com sucesso! Você entrou sem mascote. Convide um amigo no chat para criarem um pet em dupla!",
+      message: "Conta real criada com sucesso! 0 Seguidores iniciais.",
       user: {
         id: newUserRecord.id,
         name: newUserRecord.name,
         handle: newUserRecord.handle,
         phone: newUserRecord.phone,
         image: newUserRecord.image,
-        streak: newUserRecord.streak,
+        streak: 1,
+        instantsCount: 0,
+        followersCount: 0,
+        followingCount: 0,
+        bio: newUserRecord.bio,
         petId: null
       }
     });

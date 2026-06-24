@@ -16,10 +16,14 @@ export interface User {
   isFollowing?: boolean;
 }
 
+export type ElementalPetType = 'foguinho' | 'gotinho' | 'folhinha' | 'nuvlinha' | 'pedrinho' | 'ventinho' | 'sparky' | 'cristalino';
+
 export interface Pet {
   id: string;
   name: string;
-  type: 'dragon' | 'cat' | 'dog' | 'fox' | 'tiger' | 'wolf' | 'panther' | 'owl' | 'panda' | 'chimera' | 'alien' | 'phoenix';
+  type: ElementalPetType;
+  title: string;
+  personality: string;
   hunger: number;
   happiness: number;
   energy: number;
@@ -109,7 +113,7 @@ export interface VoiceMessage {
 export interface PetInvite {
   id: string;
   petName: string;
-  petType: Pet['type'];
+  petType: ElementalPetType;
   senderName: string;
   senderAvatar: string;
   status: 'pending' | 'accepted';

@@ -2,9 +2,10 @@
 
 import React, { useState } from "react";
 import { useApp } from "../providers/Providers";
-import { Flame, Send, Camera, ArrowLeft, CheckCheck, Eye, Clock, Film, Mic, Bomb, Egg, Sparkles, X, Lock, Play } from "lucide-react";
+import { Flame, Send, ArrowLeft, CheckCheck, Eye, Clock, Film, Mic, Bomb, Egg, Sparkles, X, Lock, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
+import { ELEMENTAL_PETS, ElementalPetInfo } from "@/data/elementalPets";
 
 export function ChatTab() {
   const { user, setUser, chats, selectedChatId, setSelectedChatId, sendMessage, sendGameInvite, sendPetInvite, sendVoiceMessage, sendSecretViewOnce, viewSecretMessage, reactToMessage, triggerAiMemory, sendTimeCapsule, voteInGuessPicGame, revealGuessPicAuthor } = useApp();
@@ -19,7 +20,7 @@ export function ChatTab() {
   const [capSecret, setCapSecret] = useState("");
   const [capDays, setCapDays] = useState(30);
   const [petInviteName, setPetInviteName] = useState("");
-  const [petInviteType, setPetInviteType] = useState<any>("dragon");
+  const [petInviteType, setPetInviteType] = useState<any>("foguinho");
   const [reactingMsgId, setReactingMsgId] = useState<string | null>(null);
 
   const activeChat = chats.find((c: any) => c.id === selectedChatId);
@@ -62,7 +63,7 @@ export function ChatTab() {
 
   const handleAcceptPetInvite = (pName: string) => {
     confetti({ particleCount: 120, spread: 90, origin: { y: 0.4 }, colors: ["#ff5500", "#00f0ff", "#ffd700"] });
-    alert(`🥚💥 PARABÉNS! O ovo rachou!\n\nO mascote 3D "${pName}" nasceu para você e ${activeChat?.name || "seu amigo"} cuidarem em dupla! Acesse a aba 'Mascotes' para alimentá-lo.`);
+    alert(`🥚💥 PARABÉNS! O ovo elemental 3D rachou!\n\nO mascote "${pName}" nasceu para você e ${activeChat?.name || "seu amigo"} cuidarem em dupla! Acesse a aba 'Mascotes' para alimentá-lo.`);
     if (user) {
       const next = { ...user, petId: "pet-my-1" };
       setUser(next);
@@ -71,17 +72,6 @@ export function ChatTab() {
   };
 
   const reactionEmojis = ["❤️", "🔥", "🚀", "💩", "⚡️", "💜"];
-
-  const petVarieties = [
-    { id: "dragon", icon: "🐉", name: "Dragão" },
-    { id: "tiger", icon: "🐯", name: "Tigre" },
-    { id: "wolf", icon: "🐺", name: "Lobo" },
-    { id: "panther", icon: "🐆", name: "Pantera" },
-    { id: "cat", icon: "🐱", name: "Gato" },
-    { id: "fox", icon: "🦊", name: "Raposa" },
-    { id: "owl", icon: "🦉", name: "Coruja" },
-    { id: "panda", icon: "🐼", name: "Panda" }
-  ];
 
   return (
     <div className="mx-auto max-w-md pb-24 pt-2 px-3 min-h-[80vh]">
@@ -178,7 +168,7 @@ export function ChatTab() {
                         <span className="text-4xl block animate-bounce">🥚🐣</span>
                         <p className="text-xs font-black text-fire-light uppercase tracking-wider">Convite Tamagotchi em Dupla</p>
                         <p className="text-[11px] text-neutral-200">
-                          <strong>{msg.petInvite.senderName || activeChat?.name || "Amigo"}</strong> te convidou para chocarem e cuidarem juntos do mascote 3D <strong>"{msg.petInvite.petName}"</strong>!
+                          <strong>{msg.petInvite.senderName || activeChat?.name || "Amigo"}</strong> te convidou para chocarem e cuidarem juntos do mascote 3D elemental <strong>"{msg.petInvite.petName}"</strong>!
                         </p>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleAcceptPetInvite(msg.petInvite.petName); }}
@@ -195,7 +185,7 @@ export function ChatTab() {
                           <Eye className="h-4 w-4 animate-bounce" />
                           <span>Jogo: Quem Tirou a Foto? 🕵️‍♂️📸</span>
                         </div>
-                        <p className="text-[10px] text-neutral-300">Olhe a foto abaixo e adivinhe quem do squad disparou!</p>
+                        <p className="text-[10px] text-neutral-300">Olhe a foto nítida e vote em quem do squad disparou!</p>
 
                         <div className="relative aspect-square rounded-xl overflow-hidden border border-white/20">
                           <img src={msg.gameInvite.photoUrl || "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=800&auto=format&fit=crop&q=80"} alt="Guess Pic" className="w-full h-full object-cover" />
@@ -231,7 +221,7 @@ export function ChatTab() {
                               }}
                               className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-fire py-2 text-[11px] font-black text-dark-bg shadow-md mt-2 block"
                             >
-                              Revelar Resposta & Distribuir XP 🏆
+                              Revelar Resposta & XP 🏆
                             </button>
                           </div>
                         ) : (
@@ -288,17 +278,35 @@ export function ChatTab() {
               </div>
             </div>
 
+            {/* MODAL ESCOLHER OS 8 MASCOTES ELEMENTAIS CHIBI DA FOTO PARA CHOCAR EM DUPLA */}
             <AnimatePresence>
               {showPetInviteModal && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 bg-black/90 p-6 flex flex-col justify-center text-left">
-                  <form onSubmit={handleSendPetInviteSubmit} className="space-y-4 bg-dark-card p-5 rounded-3xl border-2 border-fire shadow-2xl">
-                    <div className="flex justify-between"><h4 className="text-sm font-black text-fire flex items-center space-x-1"><Egg className="h-4 w-4" /><span>Convidar Pet em Dupla 🥚</span></h4><button type="button" onClick={() => setShowPetInviteModal(false)}><X className="h-4 w-4 text-neutral-400" /></button></div>
-                    <p className="text-[11px] text-neutral-300">Escolha a espécie que você e {activeChat?.name || "Amigo"} chocarão e cuidarão todos os dias:</p>
-                    <div className="grid grid-cols-4 gap-1.5 max-h-40 overflow-y-auto">
-                      {petVarieties.map((p) => (<button type="button" key={p.id} onClick={() => setPetInviteType(p.id)} className={`p-1.5 rounded-xl border flex flex-col items-center ${petInviteType === p.id ? "bg-fire/20 border-fire scale-105" : "bg-dark-elevated border-white/10 opacity-60"}`}><span className="text-lg">{p.icon}</span><span className="text-[8px] font-bold text-white mt-0.5">{p.name}</span></button>))}
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 bg-black/95 p-5 flex flex-col justify-center text-left">
+                  <form onSubmit={handleSendPetInviteSubmit} className="space-y-3.5 bg-dark-card p-5 rounded-3xl border-2 border-fire shadow-2xl overflow-hidden">
+                    <div className="flex justify-between"><h4 className="text-sm font-black text-fire flex items-center space-x-1"><Egg className="h-4 w-4" /><span>Escolher Pet Dupla 3D 🥚</span></h4><button type="button" onClick={() => setShowPetInviteModal(false)}><X className="h-4 w-4 text-neutral-400" /></button></div>
+                    <p className="text-[10px] text-neutral-300">Escolha o Mascote Elemental 3D que você e {activeChat?.name || "Amigo"} chocarão e cuidarão juntos:</p>
+                    
+                    <div className="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+                      {ELEMENTAL_PETS.map((p) => (
+                        <button
+                          type="button"
+                          key={p.id}
+                          onClick={() => { setPetInviteType(p.id); setPetInviteName(p.name.split(" ")[0]); }}
+                          className={`p-2 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                            petInviteType === p.id ? "bg-fire/20 border-fire shadow-md scale-102" : "bg-dark-elevated border-white/10 opacity-75"
+                          }`}
+                        >
+                          <div className="flex justify-between items-center w-full">
+                            <span className="text-xs font-black text-white">{p.name}</span>
+                            <span className="text-[8px] px-1.5 py-0.5 rounded font-bold" style={{ backgroundColor: p.color, color: "#111" }}>{p.badge}</span>
+                          </div>
+                          <p className="text-[9px] text-neutral-300 mt-1 line-clamp-2 leading-tight">{p.personality}</p>
+                        </button>
+                      ))}
                     </div>
-                    <input type="text" required placeholder="Nome do futuro mascote (Ex: Quasar)" value={petInviteName} onChange={(e) => setPetInviteName(e.target.value)} className="w-full bg-dark-elevated rounded-xl p-2.5 text-xs text-white" />
-                    <button type="submit" className="w-full py-3 bg-gradient-to-r from-fire to-amber-500 rounded-xl text-dark-bg font-black text-xs shadow-lg">Enviar Convite no Chat 💌</button>
+
+                    <input type="text" required placeholder="Dê um apelido ao mascote (Ex: Igneous)" value={petInviteName} onChange={(e) => setPetInviteName(e.target.value)} className="w-full bg-dark-elevated rounded-xl p-2.5 text-xs text-white" />
+                    <button type="submit" className="w-full py-3 bg-gradient-to-r from-fire to-amber-500 rounded-xl text-dark-bg font-black text-xs shadow-lg">Enviar Convite Elemental 💌</button>
                   </form>
                 </motion.div>
               )}

@@ -18,7 +18,9 @@ export const CURRENT_USER_MOCK: User = {
 export const INITIAL_MY_PET: Pet = {
   id: 'pet-my-1',
   name: 'Byte',
-  type: 'dragon',
+  type: 'foguinho',
+  title: 'Chama Viva',
+  personality: 'Energético, brincalhão e leal.',
   hunger: 80,
   happiness: 90,
   energy: 85,
@@ -43,7 +45,9 @@ export const INITIAL_CLAN: Clan = {
   mascot: {
     id: 'clan-pet-1',
     name: 'Quasar',
-    type: 'chimera',
+    type: 'cristalino',
+    title: 'Lobo Glacial',
+    personality: 'Elegante, misterioso e sábio.',
     hunger: 95,
     happiness: 100,
     energy: 90,
@@ -70,7 +74,7 @@ export const INITIAL_CLAN: Clan = {
   ],
   missions: [
     { id: 'mis-1', title: 'Todos os 4 membros partilharem Instants hoje', progress: 4, total: 4, rewardXp: 500, rewardItem: 'Coroa Suprema', completed: true },
-    { id: 'mis-2', title: 'Vencer 5 duelos de Quiz no Chat', progress: 5, total: 5, rewardXp: 800, rewardItem: 'Aura Cósmica', completed: true },
+    { id: 'mis-2', title: 'Votar em 5 duelos de Foto no Chat', progress: 5, total: 5, rewardXp: 800, rewardItem: 'Aura Cósmica', completed: true },
     { id: 'mis-3', title: 'Alimentar o Mascote Quasar em conjunto', progress: 8, total: 10, rewardXp: 400, completed: false }
   ],
   unlockedCosmetics: ['crown', 'wizard', 'pixel', 'aura', 'chain']
@@ -151,12 +155,12 @@ export const INITIAL_FRIENDS_CHATS: FriendChat[] = [
         gameInvite: {
           id: 'g-guess-1',
           gameType: 'guess_pic',
-          gameName: 'Quem Mandou a Foto? 🕵️‍♂️📸',
+          gameName: 'Quem Tirou a Foto? 🕵️‍♂️📸',
           senderName: 'Sofia Neon',
           status: 'active',
           myScore: 0,
           friendScore: 0,
-          anonPhotoUrl: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=800&auto=format&fit=crop&q=80',
+          photoUrl: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=800&auto=format&fit=crop&q=80',
           votes: { 'user-me-123': 'Sofia Neon' }
         }
       },
