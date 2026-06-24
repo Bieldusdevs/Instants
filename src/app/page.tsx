@@ -7,198 +7,146 @@ import { Navbar } from "@/components/app/Navbar";
 import { BottomNav } from "@/components/app/BottomNav";
 import { FeedTab } from "@/components/app/FeedTab";
 import { PetTab } from "@/components/app/PetTab";
+import { ClanTab } from "@/components/app/ClanTab";
 import { CameraTab } from "@/components/app/CameraTab";
 import { ChatTab } from "@/components/app/ChatTab";
 import { ProfileTab } from "@/components/app/ProfileTab";
-import { Sparkles, Zap, ShieldCheck, PawPrint } from "lucide-react";
+import { Sparkles, Zap, ShieldCheck, PawPrint, Lock, Phone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
-  const { user, activeTab, registerAccount, loginAccount } = useApp();
+  const { user, setUser, activeTab } = useApp();
   const [authMode, setAuthMode] = useState<"login" | "register">("register");
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  // Form de Cadastro
+  // Form Cadastro
   const [regName, setRegName] = useState("");
   const [regHandle, setRegHandle] = useState("");
+  const [regPhone, setRegPhone] = useState("");
+  const [regPassword, setRegPassword] = useState("");
   const [regPetName, setRegPetName] = useState("");
   const [regPetType, setRegPetType] = useState<"dragon" | "cat" | "dog" | "fox">("dragon");
 
-  // Form de Login
-  const [loginHandle, setLoginHandle] = useState("");
+  // Form Login
+  const [loginId, setLoginId] = useState("");
+  const [loginPass, setLoginPass] = useState("");
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!regName.trim()) return;
-    registerAccount(regName, regHandle || regName.toLowerCase(), regPetName || "Byte", regPetType);
+    setErrorMsg(""); setLoading(true);
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: regName,
+          handle: regHandle || regName.toLowerCase(),
+          phone: regPhone,
+          password: regPassword,
+          petName: regPetName || "Byte",
+          petType: regPetType
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || "Falha no cadastro.");
+        setLoading(false);
+        return;
+      }
+      setUser(data.user);
+      localStorage.setItem("instants_u_v5", JSON.stringify(data.user));
+    } catch (err) {
+      setErrorMsg("Erro de conexão com o servidor de autenticação.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    loginAccount(loginHandle || "alex.instants");
+    setErrorMsg(""); setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: loginId, password: loginPass })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || "Login negado.");
+        setLoading(false);
+        return;
+      }
+      setUser(data.user);
+      localStorage.setItem("instants_u_v5", JSON.stringify(data.user));
+    } catch (err) {
+      setErrorMsg("Erro ao contactar o servidor.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // SE NÃO LOGADO: Exibe Central de Cadastro e Login PWA
   if (!user) {
     return (
       <main className="relative min-h-screen w-full flex flex-col items-center justify-center px-4 py-8 overflow-x-hidden">
         <ShaderBackground />
-
         <div className="relative z-10 w-full max-w-md mx-auto space-y-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center space-x-2 rounded-full bg-white/10 border border-white/15 px-4 py-1.5 backdrop-blur-xl shadow-lg"
-          >
-            <Sparkles className="h-4 w-4 text-fire-light animate-spin" style={{ animationDuration: "8s" }} />
-            <span className="text-xs font-black tracking-wide uppercase text-neutral-200">
-              Rede Social PWA • Tamagotchi Co-op
-            </span>
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="inline-flex items-center space-x-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-4 py-1.5 backdrop-blur-xl shadow-lg">
+            <Lock className="h-3.5 w-3.5 text-emerald-400" />
+            <span className="text-xs font-black tracking-wide uppercase text-emerald-300">Segurança Bancária SSL • Anti-SQL Injection</span>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="space-y-2">
-            <h1 className="text-6xl font-black tracking-tighter text-white drop-shadow-[0_0_35px_rgba(255,85,0,0.3)]">
-              Instants<span className="text-fire">.</span>
-            </h1>
-            <p className="text-xs text-neutral-300 max-w-xs mx-auto leading-relaxed">
-              Partilhe fotos aleatórias, jogue no chat e cuide do seu bichinho virtual em dupla <span className="text-fire font-bold">🔥🐾</span>.
-            </p>
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="space-y-1">
+            <h1 className="text-6xl font-black tracking-tighter text-white drop-shadow-[0_0_35px_rgba(255,85,0,0.3)]">Instants<span className="text-fire">.</span></h1>
+            <p className="text-xs text-neutral-300">Obrigatório cadastro telefônico e moderação de IA <span className="text-fire font-bold">📱🛡️</span>.</p>
           </motion.div>
 
-          {/* Abas Login vs Cadastro */}
           <div className="flex rounded-2xl bg-dark-card/90 p-1 border border-white/10 max-w-xs mx-auto">
-            <button
-              onClick={() => setAuthMode("register")}
-              className={`flex-1 py-2 rounded-xl text-xs font-black transition-all ${
-                authMode === "register" ? "bg-fire text-white shadow-lg" : "text-neutral-400"
-              }`}
-            >
-              Criar Conta ✨
-            </button>
-            <button
-              onClick={() => setAuthMode("login")}
-              className={`flex-1 py-2 rounded-xl text-xs font-black transition-all ${
-                authMode === "login" ? "bg-fire text-white shadow-lg" : "text-neutral-400"
-              }`}
-            >
-              Fazer Login 🚀
-            </button>
+            <button onClick={() => { setAuthMode("register"); setErrorMsg(""); }} className={`flex-1 py-2 rounded-xl text-xs font-black ${authMode === "register" ? "bg-fire text-white shadow-lg" : "text-neutral-400"}`}>Criar Conta 🔒</button>
+            <button onClick={() => { setAuthMode("login"); setErrorMsg(""); }} className={`flex-1 py-2 rounded-xl text-xs font-black ${authMode === "login" ? "bg-fire text-white shadow-lg" : "text-neutral-400"}`}>Login 🚀</button>
           </div>
 
-          <motion.div
-            key={authMode}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-3xl bg-dark-card/95 border border-white/15 p-6 shadow-2xl backdrop-blur-2xl text-left"
-          >
+          <motion.div key={authMode} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-3xl bg-dark-card/95 border border-white/15 p-6 shadow-2xl text-left">
+            {errorMsg && (
+              <div className="rounded-xl bg-red-500/20 border border-red-500 p-3 text-xs font-bold text-red-300 mb-4 text-center">
+                {errorMsg}
+              </div>
+            )}
+
             {authMode === "register" ? (
-              <form onSubmit={handleRegisterSubmit} className="space-y-4">
-                <div className="text-center pb-1">
-                  <h3 className="text-base font-extrabold text-white">Monte seu Perfil & Pet</h3>
-                  <p className="text-[11px] text-neutral-400">Rápido, sem e-mail ou confirmação</p>
-                </div>
+              <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
+                <div className="text-center pb-1"><h3 className="text-base font-extrabold text-white">Cadastro Profissional</h3></div>
+                
+                <div><label className="text-[10px] font-bold text-neutral-400 block mb-1">Nome Completo</label><input type="text" required placeholder="Ex: Alex Cyber" value={regName} onChange={(e) => setRegName(e.target.value)} className="w-full rounded-xl bg-dark-elevated border border-white/15 px-3 py-2.5 text-xs text-white" /></div>
+                
+                <div><label className="text-[10px] font-bold text-neutral-400 block mb-1">Apelido (@handle)</label><input type="text" required placeholder="Ex: alex.instants" value={regHandle} onChange={(e) => setRegHandle(e.target.value)} className="w-full rounded-xl bg-dark-elevated border border-white/15 px-3 py-2.5 text-xs text-white" /></div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">Seu Nome</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: Alex Cyber"
-                    value={regName}
-                    onChange={(e) => setRegName(e.target.value)}
-                    className="w-full rounded-xl bg-dark-elevated border border-white/15 px-3 py-2.5 text-xs text-white placeholder-neutral-500 focus:border-fire focus:outline-hidden"
-                  />
+                  <label className="text-[10px] font-bold text-fire-light block mb-1 flex items-center space-x-1"><Phone className="h-3 w-3" /><span>Número de Telefone (Obrigatório) *</span></label>
+                  <input type="tel" required placeholder="+55 11 99999-9999 ou +351 912 345 678" value={regPhone} onChange={(e) => setRegPhone(e.target.value)} className="w-full rounded-xl bg-dark-elevated border border-fire/50 px-3 py-2.5 text-xs text-white font-mono" />
                 </div>
 
-                <div>
-                  <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">Apelido (@handle)</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: alex.instants"
-                    value={regHandle}
-                    onChange={(e) => setRegHandle(e.target.value)}
-                    className="w-full rounded-xl bg-dark-elevated border border-white/15 px-3 py-2.5 text-xs text-white placeholder-neutral-500 focus:border-fire focus:outline-hidden"
-                  />
+                <div><label className="text-[10px] font-bold text-neutral-400 block mb-1">Senha (Mínimo 6 caracteres)</label><input type="password" required minLength={6} placeholder="••••••••" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} className="w-full rounded-xl bg-dark-elevated border border-white/15 px-3 py-2.5 text-xs text-white" /></div>
+
+                <div className="pt-2 border-t border-white/10 space-y-1.5">
+                  <label className="text-[10px] font-bold text-neon-cyan block">Seu Pet Inicial 🐾</label>
+                  <div className="grid grid-cols-4 gap-2">{[{ id: "dragon", icon: "🐉", name: "Dragão" }, { id: "cat", icon: "🐱", name: "Gato" }, { id: "dog", icon: "🐶", name: "Cão" }, { id: "fox", icon: "🦊", name: "Raposa" }].map((p) => (<button type="button" key={p.id} onClick={() => setRegPetType(p.id as any)} className={`p-2 rounded-xl border flex flex-col items-center ${regPetType === p.id ? "bg-fire/20 border-fire scale-105" : "bg-dark-elevated border-white/10 opacity-60"}`}><span className="text-xl">{p.icon}</span><span className="text-[8px] font-bold text-white mt-1">{p.name}</span></button>))}</div>
                 </div>
 
-                <div className="pt-2 border-t border-white/10 space-y-2">
-                  <label className="text-[10px] font-bold text-fire-light uppercase tracking-wider block">Escolha seu Bichinho Virtual 🐾</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[
-                      { id: "dragon", icon: "🐉", name: "Dragão" },
-                      { id: "cat", icon: "🐱", name: "Gato" },
-                      { id: "dog", icon: "🐶", name: "Cão" },
-                      { id: "fox", icon: "🦊", name: "Raposa" },
-                    ].map((p) => (
-                      <button
-                        type="button"
-                        key={p.id}
-                        onClick={() => setRegPetType(p.id as any)}
-                        className={`p-2 rounded-xl border flex flex-col items-center transition-all ${
-                          regPetType === p.id ? "bg-fire/20 border-fire scale-105" : "bg-dark-elevated border-white/10 opacity-60"
-                        }`}
-                      >
-                        <span className="text-2xl">{p.icon}</span>
-                        <span className="text-[9px] font-bold text-white mt-1">{p.name}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  <input
-                    type="text"
-                    placeholder="Nome do seu pet (Ex: Byte)"
-                    value={regPetName}
-                    onChange={(e) => setRegPetName(e.target.value)}
-                    className="w-full rounded-xl bg-dark-elevated border border-white/15 px-3 py-2.5 text-xs text-white placeholder-neutral-500 focus:border-fire focus:outline-hidden mt-2"
-                  />
-                </div>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  className="flex w-full items-center justify-center space-x-2 rounded-2xl bg-gradient-to-r from-fire via-fire-glow to-neon-purple py-3.5 text-xs font-black text-white shadow-[0_0_20px_rgba(255,85,0,0.5)] mt-4"
-                >
-                  <PawPrint className="h-4 w-4 fill-white animate-bounce" />
-                  <span>Cadastrar & Nascer Pet ✨</span>
-                </motion.button>
+                <button disabled={loading} type="submit" className="w-full rounded-2xl bg-gradient-to-r from-fire via-fire-glow to-neon-purple py-3.5 text-xs font-black text-white shadow-lg mt-4 disabled:opacity-50">
+                  {loading ? "Validando Segurança..." : "Cadastrar & Conectar 🔒"}
+                </button>
               </form>
             ) : (
               <form onSubmit={handleLoginSubmit} className="space-y-4">
-                <div className="text-center pb-1">
-                  <h3 className="text-base font-extrabold text-white">Entrar de Volta</h3>
-                  <p className="text-[11px] text-neutral-400">Acesse sua conta e cuide do pet</p>
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">Seu @handle ou Apelido</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: @alex.instants"
-                    value={loginHandle}
-                    onChange={(e) => setLoginHandle(e.target.value)}
-                    className="w-full rounded-xl bg-dark-elevated border border-white/15 px-3 py-3 text-xs text-white placeholder-neutral-500 focus:border-fire focus:outline-hidden"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">Senha Rápida</label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    className="w-full rounded-xl bg-dark-elevated border border-white/15 px-3 py-3 text-xs text-white placeholder-neutral-500 focus:border-fire focus:outline-hidden"
-                  />
-                </div>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  className="flex w-full items-center justify-center space-x-2 rounded-2xl bg-gradient-to-r from-fire via-fire-glow to-neon-purple py-3.5 text-xs font-black text-white shadow-[0_0_20px_rgba(255,85,0,0.5)] mt-4"
-                >
-                  <Zap className="h-4 w-4 fill-white animate-bounce" />
-                  <span>Entrar no App Agora 🚀</span>
-                </motion.button>
+                <div className="text-center pb-1"><h3 className="text-base font-extrabold text-white">Acesso Seguro</h3></div>
+                <div><label className="text-[10px] font-bold text-neutral-400 block mb-1">Seu Handle ou Telefone</label><input type="text" required placeholder="Ex: @alex.instants ou +5511999999999" value={loginId} onChange={(e) => setLoginId(e.target.value)} className="w-full rounded-xl bg-dark-elevated border border-white/15 px-3 py-3 text-xs text-white" /></div>
+                <div><label className="text-[10px] font-bold text-neutral-400 block mb-1">Senha</label><input type="password" required placeholder="••••••••" value={loginPass} onChange={(e) => setLoginPass(e.target.value)} className="w-full rounded-xl bg-dark-elevated border border-white/15 px-3 py-3 text-xs text-white" /></div>
+                
+                <button disabled={loading} type="submit" className="w-full rounded-2xl bg-gradient-to-r from-fire via-fire-glow to-neon-purple py-3.5 text-xs font-black text-white shadow-lg mt-4 disabled:opacity-50">
+                  {loading ? "Verificando Rate Limit..." : "Entrar com SHA-256 🚀"}
+                </button>
               </form>
             )}
           </motion.div>
@@ -207,7 +155,6 @@ export default function Home() {
     );
   }
 
-  // SE LOGADO: Renderiza App PWA Completo
   return (
     <div className="relative min-h-screen w-full flex flex-col bg-dark-bg text-white selection:bg-fire">
       <ShaderBackground />
@@ -215,31 +162,12 @@ export default function Home() {
 
       <main className="flex-1 w-full overflow-x-hidden">
         <AnimatePresence mode="wait">
-          {activeTab === "feed" && (
-            <motion.div key="feed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <FeedTab />
-            </motion.div>
-          )}
-          {activeTab === "pet" && (
-            <motion.div key="pet" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <PetTab />
-            </motion.div>
-          )}
-          {activeTab === "camera" && (
-            <motion.div key="camera" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <CameraTab />
-            </motion.div>
-          )}
-          {activeTab === "chat" && (
-            <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <ChatTab />
-            </motion.div>
-          )}
-          {activeTab === "profile" && (
-            <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <ProfileTab />
-            </motion.div>
-          )}
+          {activeTab === "feed" && <motion.div key="feed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><FeedTab /></motion.div>}
+          {activeTab === "pet" && <motion.div key="pet" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><PetTab /></motion.div>}
+          {activeTab === "clan" && <motion.div key="clan" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ClanTab /></motion.div>}
+          {activeTab === "camera" && <motion.div key="camera" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><CameraTab /></motion.div>}
+          {activeTab === "chat" && <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ChatTab /></motion.div>}
+          {activeTab === "profile" && <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ProfileTab /></motion.div>}
         </AnimatePresence>
       </main>
 

@@ -2,14 +2,21 @@
 
 import React, { useState } from "react";
 import { useApp } from "../providers/Providers";
-import { Flame, Send, Camera, ArrowLeft, CheckCheck, Gamepad2, Play, Trophy, Check, X, ShieldAlert } from "lucide-react";
+import { Flame, Send, Camera, ArrowLeft, CheckCheck, Gamepad2, Play, Trophy, X, Lock, Sparkles, Film, Mic, Bomb, Eye, PartyPopper, Clock, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 
 export function ChatTab() {
-  const { chats, selectedChatId, setSelectedChatId, sendMessage, sendGameInvite } = useApp();
+  const { chats, selectedChatId, setSelectedChatId, sendMessage, sendGameInvite, sendVoiceMessage, sendSecretViewOnce, viewSecretMessage, reactToMessage, triggerAiMemory } = useApp();
   const [inputText, setInputText] = useState("");
+  
+  // Modais / Drawers
   const [showGameDrawer, setShowGameDrawer] = useState(false);
+  const [showSecretModal, setShowSecretModal] = useState(false);
+  const [secretText, setSecretText] = useState("");
+  const [reactingMsgId, setReactingMsgId] = useState<string | null>(null);
+
+  // Mini Jogo no Chat
   const [activeMiniGame, setActiveMiniGame] = useState<string | null>(null);
   const [gameScoreMe, setGameScoreMe] = useState(0);
   const [gameScoreFriend, setGameScoreFriend] = useState(0);
@@ -22,22 +29,19 @@ export function ChatTab() {
     setInputText("");
   };
 
-  const handleSendInstantPhoto = () => {
-    if (!selectedChatId) return;
-    confetti({
-      particleCount: 30,
-      spread: 50,
-      origin: { y: 0.7 },
-      colors: ["#ff5500", "#8a2be2"],
-    });
+  const handleSendSecretSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!secretText.trim() || !selectedChatId) return;
+    confetti({ particleCount: 30, spread: 50, origin: { y: 0.6 } });
+    sendSecretViewOnce(selectedChatId, secretText);
+    setShowSecretModal(false);
+    setSecretText("");
+  };
 
-    const randomSecretPics = [
-      "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=600&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600&auto=format&fit=crop&q=80",
-    ];
-    const pic = randomSecretPics[Math.floor(Math.random() * randomSecretPics.length)];
-    sendMessage(selectedChatId, "📸 Foto instantânea enviada pro Story Privado!", pic);
+  const handleSendVoice = () => {
+    if (!selectedChatId) return;
+    confetti({ particleCount: 20, spread: 40, origin: { y: 0.7 } });
+    sendVoiceMessage(selectedChatId, Math.floor(Math.random() * 10) + 5); // 5 a 15 seg
   };
 
   const handleStartGame = (gameType: any, gameName: string) => {
@@ -45,41 +49,34 @@ export function ChatTab() {
     sendGameInvite(selectedChatId, gameType, gameName);
     setShowGameDrawer(false);
     setActiveMiniGame(gameType);
-    setGameScoreMe(0);
-    setGameScoreFriend(0);
+    setGameScoreMe(0); setGameScoreFriend(0);
   };
 
   const handlePlayMiniGameStep = () => {
-    // Aumenta ponto e simula o oponente ganhando também!
     setGameScoreMe((prev) => prev + 1);
-    if (Math.random() > 0.4) {
-      setGameScoreFriend((prev) => prev + 1);
-    }
+    if (Math.random() > 0.4) setGameScoreFriend((prev) => prev + 1);
     confetti({ particleCount: 15, spread: 30, origin: { y: 0.6 }, colors: ["#00f0ff"] });
   };
 
   const gamesList = [
+    { type: "quiz", name: "Quiz Besties ❓🧠", desc: "Perguntas exclusivas sobre vocês" },
+    { type: "guess_pic", name: "Quem Mandou a Foto? 🕵️‍♂️📸", desc: "Adivinhe pela foto borrada" },
     { type: "pingpong", name: "Ping Pong Neon 🏓", desc: "Rebata a bola em velocidade turbo" },
-    { type: "soccer", name: "Pênalti Master ⚽️", desc: "Chute no ângulo e drible o goleiro" },
-    { type: "checkers", name: "Xadrez / Damas ♟️", desc: "Duelo estratégico no tabuleiro" },
-    { type: "race", name: "Turbo Corrida 🏎️", desc: "Aperte rápido para acelerar" },
+    { type: "soccer", name: "Pênalti Master ⚽️", desc: "Chute no ângulo" },
     { type: "space", name: "Guerra Espacial 🚀👾", desc: "Destrua naves invasoras" },
   ];
+
+  const reactionEmojis = ["❤️", "🔥", "🚀", "💩", "⚡️", "💜"];
 
   return (
     <div className="mx-auto max-w-md pb-24 pt-2 px-3 min-h-[80vh]">
       <AnimatePresence mode="wait">
         {!activeChat ? (
-          <motion.div
-            key="chat-list"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-4"
-          >
+          /* LISTA DE CONVERSAS E SALAS DE FESTA */
+          <motion.div key="chat-list" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
             <div className="flex items-center justify-between px-1">
-              <h2 className="text-lg font-black text-white">Mensagens & Amigos 💬</h2>
-              <span className="text-xs font-bold text-neutral-400">{chats.length} conexões</span>
+              <h2 className="text-lg font-black text-white">Mensagens & Salas 🎉💬</h2>
+              <span className="text-xs font-bold text-neutral-400">{chats.length} chats ativos</span>
             </div>
 
             <div className="space-y-2.5">
@@ -89,26 +86,34 @@ export function ChatTab() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setSelectedChatId(chat.id)}
-                  className="cursor-pointer overflow-hidden rounded-2xl bg-dark-card border border-white/10 p-3.5 shadow-xl backdrop-blur-md flex items-center justify-between transition-colors hover:border-white/20"
+                  className={`cursor-pointer overflow-hidden rounded-2xl p-3.5 shadow-xl backdrop-blur-md flex items-center justify-between transition-colors border ${
+                    chat.isTemporaryRoom ? "bg-gradient-to-r from-neon-pink/20 to-dark-card border-neon-pink/50" : "bg-dark-card border-white/10 hover:border-white/20"
+                  }`}
                 >
                   <div className="flex items-center space-x-3.5 min-w-0">
                     <div className="relative shrink-0">
                       <img src={chat.avatar} alt={chat.name} className="h-12 w-12 rounded-full object-cover border border-white/10" />
-                      {chat.isOnline && (
-                        <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-dark-card" />
-                      )}
+                      {chat.isOnline && <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-dark-card" />}
                     </div>
                     <div className="min-w-0 flex-1 pr-2">
                       <div className="flex items-center space-x-1.5">
                         <h3 className="text-sm font-bold text-white truncate">{chat.name}</h3>
-                        <span className="text-[10px] text-neutral-500">{chat.handle}</span>
+                        {chat.isTemporaryRoom ? (
+                          <span className="rounded-full bg-neon-pink px-1.5 py-0.5 text-[8px] font-black text-white animate-pulse">
+                            ⏳ {chat.roomExpiresIn}
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-neon-pink/20 border border-neon-pink/40 px-1.5 py-0.5 text-[9px] font-black text-neon-pink">
+                            Nvl {chat.friendshipLevel || 1} 💖
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-neutral-400 truncate mt-0.5">{chat.lastMessage}</p>
                     </div>
                   </div>
 
                   <div className="flex flex-col items-end shrink-0 space-y-1">
-                    <span className="flex items-center space-x-1 rounded-full bg-fire/15 border border-fire/30 px-2 py-0.5 text-[11px] font-black text-fire-light shadow-[0_0_8px_rgba(255,85,0,0.2)]">
+                    <span className="flex items-center space-x-1 rounded-full bg-fire/15 border border-fire/30 px-2 py-0.5 text-[11px] font-black text-fire-light">
                       <Flame className="h-3 w-3 fill-fire text-fire animate-fire-flicker" />
                       <span>{chat.streak}d</span>
                     </span>
@@ -119,224 +124,190 @@ export function ChatTab() {
             </div>
           </motion.div>
         ) : (
-          <motion.div
-            key="chat-room"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            className="flex flex-col h-[78vh] bg-dark-card/60 rounded-3xl border border-white/10 overflow-hidden shadow-2xl backdrop-blur-xl relative"
-          >
-            {/* Header da conversa */}
-            <div className="flex items-center justify-between p-3.5 border-b border-white/10 bg-dark-card/90">
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => { setSelectedChatId(null); setActiveMiniGame(null); }}
-                  className="rounded-full p-1.5 text-neutral-300 hover:bg-white/10 transition-colors"
-                >
+          /* TELA DE CHAT PRIVADO OU SALA DE FESTA */
+          <motion.div key="chat-room" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="flex flex-col h-[78vh] bg-dark-card/60 rounded-3xl border border-white/10 overflow-hidden shadow-2xl backdrop-blur-xl relative">
+            {/* Header */}
+            <div className="flex items-center justify-between p-3 border-b border-white/10 bg-dark-card/95">
+              <div className="flex items-center space-x-2.5">
+                <button onClick={() => { setSelectedChatId(null); setActiveMiniGame(null); }} className="rounded-full p-1 text-neutral-300 hover:bg-white/10">
                   <ArrowLeft className="h-5 w-5" />
                 </button>
                 <img src={activeChat.avatar} alt={activeChat.name} className="h-9 w-9 rounded-full object-cover" />
                 <div>
-                  <h3 className="text-xs font-bold text-white">{activeChat.name}</h3>
-                  <p className="text-[10px] text-emerald-400 font-medium">Online • Compartilha Pet 🐾</p>
+                  <div className="flex items-center space-x-1">
+                    <h3 className="text-xs font-bold text-white">{activeChat.name}</h3>
+                    {activeChat.isTemporaryRoom ? (
+                      <span className="text-[9px] bg-neon-pink px-1 rounded text-white font-black">Expira em {activeChat.roomExpiresIn}</span>
+                    ) : (
+                      <span className="text-[10px] text-neon-pink font-black">Nvl {activeChat.friendshipLevel} 💖</span>
+                    )}
+                  </div>
+                  <p className="text-[9px] text-emerald-400 font-medium">Ranking Besties Privado 🏆</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-1.5 rounded-full bg-fire/20 border border-fire/40 px-2.5 py-1 text-xs font-black text-fire-light">
-                <Flame className="h-3.5 w-3.5 fill-fire text-fire animate-bounce" />
-                <span>{activeChat.streak} dias seguidos</span>
+              <div className="flex items-center space-x-1">
+                <button onClick={() => triggerAiMemory(activeChat.id)} className="flex items-center space-x-1 rounded-xl bg-neon-purple/20 border border-neon-purple/40 px-2 py-1 text-[10px] font-black text-neon-purple hover:scale-105">
+                  <Film className="h-3.5 w-3.5 animate-spin" />
+                  <span>IA Memória</span>
+                </button>
               </div>
             </div>
 
-            {/* Mensagens e Mini Jogos */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+            {/* Mensagens */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
               <div className="text-center my-1">
                 <span className="rounded-full bg-white/5 px-3 py-1 text-[10px] text-neutral-400">
-                  🐾 Cuidem juntos do Pet virtual enviando fotos diárias!
+                  👆 Segure em qualquer balão para mandar reações exclusivas!
                 </span>
               </div>
 
               {activeChat?.messages?.map((msg: any) => (
-                <div key={msg.id} className={`flex flex-col ${msg.isMe ? "items-end" : "items-start"}`}>
+                <div key={msg.id} className={`flex flex-col ${msg.isMe ? "items-end" : "items-start"} relative group`}>
                   <div
-                    className={`max-w-[85%] rounded-2xl p-3 text-xs shadow-md ${
-                      msg.isMe
-                        ? "bg-gradient-to-tr from-fire to-fire-glow text-white rounded-br-xs font-medium"
-                        : "bg-dark-elevated border border-white/10 text-neutral-200 rounded-bl-xs"
+                    onClick={() => setReactingMsgId(reactingMsgId === msg.id ? null : msg.id)}
+                    className={`cursor-pointer max-w-[85%] rounded-2xl p-3 text-xs shadow-md transition-transform ${
+                      msg.isMe ? "bg-gradient-to-tr from-fire to-fire-glow text-white rounded-br-xs font-medium" : "bg-dark-elevated border border-white/10 text-neutral-200 rounded-bl-xs"
                     }`}
                   >
-                    {/* Foto privada */}
-                    {msg.mediaUrl && (
+                    {/* ÁUDIO RÁPIDO (5-15s) */}
+                    {msg.mediaType === "voice" && msg.voiceMessage && (
+                      <div className="flex items-center space-x-2 py-1 min-w-[160px]">
+                        <button onClick={() => alert(`▶️ Tocando áudio rápido de ${msg.voiceMessage.duration}s!`)} className="rounded-full bg-white/20 p-2 text-white hover:scale-110 shrink-0">
+                          <Play className="h-4 w-4 fill-white" />
+                        </button>
+                        <div className="flex items-center space-x-1 flex-1 h-6 overflow-hidden">
+                          {msg.voiceMessage.waves.map((w: number, i: number) => (
+                            <span key={i} className="w-1 bg-white/80 rounded-full transition-all animate-pulse" style={{ height: `${w}%` }} />
+                          ))}
+                        </div>
+                        <span className="text-[10px] font-mono font-bold text-white">{msg.voiceMessage.duration}s</span>
+                      </div>
+                    )}
+
+                    {/* MENSAGEM SECRETA (VIEW ONCE) */}
+                    {msg.mediaType === "secret_once" && msg.secretMessage && (
+                      <div className="rounded-xl bg-black/70 p-3 border border-red-500/60 text-center my-1 min-w-[190px]">
+                        <div className="flex items-center justify-center space-x-1.5 text-red-400 font-black text-xs mb-1">
+                          <Bomb className="h-4 w-4 animate-bounce" />
+                          <span>Mensagem Secreta (1x)</span>
+                        </div>
+                        {!msg.secretMessage.viewed ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              confetti({ particleCount: 50, spread: 80, origin: { y: 0.5 } });
+                              alert(`💣 MENSAGEM SECRETA REVELADA:\n\n"${msg.secretMessage.text}"\n\n⚠️ Esta mensagem agora virou fumaça e foi excluída permanentemente!`);
+                              viewSecretMessage(activeChat.id, msg.id);
+                            }}
+                            className="w-full rounded-lg bg-red-500/20 border border-red-500/40 py-2 text-xs font-black text-red-300 hover:bg-red-500/30 flex items-center justify-center space-x-1"
+                          >
+                            <Eye className="h-4 w-4" />
+                            <span>Abrir Agora 💣</span>
+                          </button>
+                        ) : (
+                          <p className="text-[10px] font-mono text-neutral-500 italic">💨 Esta mensagem secreta já foi visualizada e desapareceu.</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* VÍDEO DE IA */}
+                    {msg.mediaType === "ai_memory" && (
+                      <div className="rounded-xl bg-gradient-to-br from-neon-purple/40 to-blue-600/40 p-3 border border-neon-purple text-center my-1">
+                        <p className="text-neon-cyan font-black text-xs mb-1">🎞️ Vídeo de IA das Nossas Vibrações</p>
+                        <img src={msg.mediaUrl} alt="AI Memory" className="w-full rounded-lg object-cover max-h-36 mb-1" />
+                        <button onClick={() => alert("🎬 Abrindo Player de IA em tela cheia!")} className="w-full rounded-lg bg-neon-purple py-1 text-[11px] font-black text-white">Assistir Vídeo</button>
+                      </div>
+                    )}
+
+                    {msg.mediaUrl && msg.mediaType !== "ai_memory" && msg.mediaType !== "secret_once" && !msg.timeCapsule && (
                       <div className="mb-2 overflow-hidden rounded-xl border border-white/20">
                         <img src={msg.mediaUrl} alt="Instant sent" className="w-full object-cover max-h-48" />
                       </div>
                     )}
 
-                    {/* Convite de Pet Co-op */}
-                    {msg.petInvite && (
-                      <div className="rounded-xl bg-black/40 p-3 border border-fire/40 space-y-2 text-center my-1">
-                        <p className="text-xs font-bold text-fire-light">💌 Convite Tamagotchi Dupla</p>
-                        <p className="text-[11px] text-neutral-300">
-                          Vamos cuidar juntos do pet <span className="font-bold text-white">{msg.petInvite.petName}</span>!
-                        </p>
-                        <button
-                          onClick={() => {
-                            confetti({ particleCount: 50, spread: 70, origin: { y: 0.5 } });
-                            alert("Convite aceito! Vocês são donos do animalzinho agora.");
-                          }}
-                          className="w-full rounded-lg bg-fire py-1.5 text-xs font-black text-white hover:bg-fire-glow shadow-[0_0_10px_#ff5500]"
-                        >
-                          Aceitar Pet 🐾
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Convite de Mini Jogo */}
                     {msg.gameInvite && (
-                      <div className="rounded-xl bg-dark-bg/80 p-3 border border-neon-cyan/40 space-y-2 text-center my-1 min-w-[200px]">
-                        <div className="flex items-center justify-center space-x-1.5 text-neon-cyan font-black">
-                          <Gamepad2 className="h-4 w-4 animate-bounce" />
-                          <span>{msg.gameInvite.gameName}</span>
-                        </div>
-                        <p className="text-[10px] text-neutral-400">Partida instantânea no chat</p>
-                        <button
-                          onClick={() => setActiveMiniGame(msg.gameInvite.gameType)}
-                          className="flex items-center justify-center space-x-1.5 w-full rounded-xl bg-gradient-to-r from-neon-cyan to-blue-500 py-2 text-xs font-black text-dark-bg hover:scale-105 transition-all shadow-[0_0_12px_rgba(0,240,255,0.4)]"
-                        >
-                          <Play className="h-3.5 w-3.5 fill-dark-bg" />
-                          <span>Abrir Jogo Agora</span>
-                        </button>
+                      <div className="rounded-xl bg-dark-bg/80 p-3 border border-neon-cyan/40 text-center my-1 min-w-[180px]">
+                        <p className="text-neon-cyan font-black text-xs">🎮 {msg.gameInvite.gameName}</p>
+                        <button onClick={() => setActiveMiniGame(msg.gameInvite.gameType)} className="w-full rounded-lg bg-neon-cyan py-1 text-xs font-black text-dark-bg mt-1">Jogar Duelo</button>
                       </div>
                     )}
 
                     {msg.text && <p className="leading-relaxed">{msg.text}</p>}
                   </div>
-                  <div className="flex items-center space-x-1 mt-1 px-1 text-[9px] text-neutral-500">
-                    <span>{msg.timestamp}</span>
-                    {msg.isMe && <CheckCheck className="h-3 w-3 text-neon-cyan" />}
-                  </div>
+
+                  {/* Emojis Reagidos */}
+                  {msg.reactions && msg.reactions.length > 0 && (
+                    <div className="flex items-center space-x-1 -mt-2 z-10 ml-2">
+                      {msg.reactions.map((r: any, idx: number) => (
+                        <span key={idx} className="rounded-full bg-dark-card border border-white/20 px-1.5 py-0.5 text-[10px] shadow-md animate-bounce">{r.emoji}</span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Popover de Reações Personalizadas */}
+                  <AnimatePresence>
+                    {reactingMsgId === msg.id && (
+                      <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} className="absolute -top-10 z-50 flex items-center space-x-1.5 bg-dark-card/95 border border-white/20 p-1.5 rounded-full shadow-2xl backdrop-blur-xl">
+                        {reactionEmojis.map((emj) => (
+                          <button key={emj} onClick={() => { reactToMessage(activeChat.id, msg.id, emj); setReactingMsgId(null); }} className="p-1 text-base hover:scale-125 transition-transform">{emj}</button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <span className="text-[8px] text-neutral-500 mt-1 px-1">{msg.timestamp}</span>
                 </div>
               ))}
             </div>
 
-            {/* MINI JOGO OVERLAY JOGÁVEL NO CHAT */}
+            {/* MINI JOGO OVERLAY */}
             <AnimatePresence>
               {activeMiniGame && (
-                <motion.div
-                  initial={{ y: "100%" }}
-                  animate={{ y: 0 }}
-                  exit={{ y: "100%" }}
-                  className="absolute inset-x-0 bottom-0 top-14 z-50 bg-dark-bg/95 backdrop-blur-2xl p-4 flex flex-col justify-between border-t border-neon-cyan/30"
-                >
-                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                    <div className="flex items-center space-x-2">
-                      <Gamepad2 className="h-5 w-5 text-neon-cyan animate-pulse" />
-                      <h4 className="text-sm font-black text-white uppercase tracking-wider">Duelo com {activeChat.name}</h4>
-                    </div>
-                    <button onClick={() => setActiveMiniGame(null)} className="p-1 rounded-lg bg-white/10 hover:bg-white/20 text-neutral-300">
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-
-                  {/* Arena do Jogo */}
-                  <div className="flex-1 flex flex-col items-center justify-center space-y-6 my-4">
-                    <div className="flex items-center space-x-8">
-                      <div className="text-center">
-                        <p className="text-xs text-neutral-400 font-bold">Você</p>
-                        <p className="text-5xl font-black text-neon-cyan drop-shadow-[0_0_15px_#00f0ff]">{gameScoreMe}</p>
-                      </div>
-                      <span className="text-2xl font-black text-neutral-600">VS</span>
-                      <div className="text-center">
-                        <p className="text-xs text-neutral-400 font-bold">{activeChat.name}</p>
-                        <p className="text-5xl font-black text-neon-pink drop-shadow-[0_0_15px_#ff007f]">{gameScoreFriend}</p>
-                      </div>
-                    </div>
-
-                    <div className="rounded-3xl bg-dark-card border border-white/15 p-6 w-full max-w-xs text-center space-y-4 shadow-2xl">
-                      <span className="text-6xl animate-bounce block">
-                        {activeMiniGame === "pingpong" && "🏓"}
-                        {activeMiniGame === "soccer" && "⚽️"}
-                        {activeMiniGame === "race" && "🏎️"}
-                        {activeMiniGame === "space" && "🚀"}
-                        {activeMiniGame === "checkers" && "♟️"}
-                      </span>
-                      <p className="text-xs text-neutral-300">
-                        Toque repetidamente na tela para marcar pontos antes que o tempo acabe!
-                      </p>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={handlePlayMiniGameStep}
-                        className="w-full rounded-2xl bg-gradient-to-r from-neon-cyan via-blue-500 to-neon-purple py-4 text-sm font-black text-dark-bg shadow-[0_0_25px_rgba(0,240,255,0.6)] select-none"
-                      >
-                        JOGADA RÁPIDA ⚡️ (+1 pt)
-                      </motion.button>
-                    </div>
-                  </div>
-
-                  <p className="text-[10px] text-neutral-500 text-center">Os pontos são sincronizados instantaneamente na conversa.</p>
+                <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="absolute inset-x-0 bottom-0 top-12 z-50 bg-dark-bg/95 p-4 flex flex-col justify-between border-t border-neon-cyan">
+                  <div className="flex justify-between items-center border-b border-white/10 pb-2"><h4 className="text-xs font-black text-neon-cyan">Duelo no Chat</h4><button onClick={() => setActiveMiniGame(null)}><X className="h-5 w-5" /></button></div>
+                  <div className="text-center space-y-4 my-auto"><p className="text-4xl font-black text-white">{gameScoreMe} VS {gameScoreFriend}</p><button onClick={handlePlayMiniGameStep} className="w-full py-4 rounded-2xl bg-neon-cyan text-dark-bg font-black text-base">MARCAR PONTO ⚡️ (+1 pt)</button></div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Bottom Bar de envio e convite de jogos */}
-            <div className="p-3 border-t border-white/10 bg-dark-card/90 space-y-2">
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setShowGameDrawer(!showGameDrawer)}
-                  className="group flex items-center space-x-1.5 rounded-xl bg-neon-cyan/20 border border-neon-cyan/40 px-3 py-2 text-xs font-black text-neon-cyan hover:bg-neon-cyan/30 transition-all shadow-[0_0_10px_rgba(0,240,255,0.2)]"
-                >
-                  <Gamepad2 className="h-4 w-4 text-neon-cyan group-hover:rotate-12 transition-transform" />
-                  <span className="hidden sm:inline">Jogar</span>
+            {/* MODAL MENSAGEM SECRETA 1x */}
+            <AnimatePresence>
+              {showSecretModal && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-50 bg-black/90 backdrop-blur-xl p-6 flex flex-col justify-center text-left">
+                  <form onSubmit={handleSendSecretSubmit} className="space-y-4 bg-dark-card p-5 rounded-3xl border border-red-500/50 shadow-2xl">
+                    <div className="flex items-center justify-between"><h4 className="text-sm font-black text-red-400 flex items-center space-x-1"><Bomb className="h-4 w-4" /><span>Mensagem Secreta (View Once) 💣👁️</span></h4><button type="button" onClick={() => setShowSecretModal(false)}><X className="h-4 w-4 text-neutral-400" /></button></div>
+                    <p className="text-[11px] text-neutral-300">Esta mensagem desaparecerá permanentemente em fumaça após o amigo abrir!</p>
+                    <textarea required placeholder="Digite o segredo bombástico..." value={secretText} onChange={(e) => setSecretText(e.target.value)} className="w-full h-24 rounded-xl bg-dark-elevated border border-white/15 p-3 text-xs text-white" />
+                    <button type="submit" className="w-full rounded-2xl bg-red-500 py-3 text-xs font-black text-white shadow-[0_0_15px_#ef4444]">Selar & Enviar 💣</button>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Bottom bar */}
+            <div className="p-3 border-t border-white/10 bg-dark-card/95 space-y-2">
+              <div className="flex items-center space-x-1.5">
+                <button onClick={handleSendVoice} className="flex items-center space-x-1 rounded-xl bg-neon-purple/20 border border-neon-purple/40 p-2 text-xs font-black text-neon-purple hover:bg-neon-purple/30" title="Áudio Rápido 5-15s">
+                  <Mic className="h-4 w-4" />
                 </button>
 
-                <button
-                  onClick={handleSendInstantPhoto}
-                  className="group flex items-center space-x-1.5 rounded-xl bg-neon-purple/20 border border-neon-purple/40 px-3 py-2 text-xs font-bold text-neon-purple hover:bg-neon-purple/30 transition-all"
-                  title="Enviar Foto Instantânea"
-                >
-                  <Camera className="h-4 w-4 text-neon-purple group-hover:scale-110 transition-transform" />
+                <button onClick={() => setShowSecretModal(true)} className="flex items-center space-x-1 rounded-xl bg-red-500/20 border border-red-500/40 p-2 text-xs font-black text-red-400 hover:bg-red-500/30" title="Mensagem Secreta Única">
+                  <Bomb className="h-4 w-4" />
                 </button>
 
-                <input
-                  type="text"
-                  placeholder="Escreva no chat..."
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                  className="flex-1 rounded-xl bg-dark-elevated border border-white/15 px-3 py-2 text-xs text-white placeholder-neutral-500 focus:border-fire focus:outline-hidden"
-                />
-
-                <button
-                  onClick={handleSend}
-                  className="rounded-xl bg-fire p-2 text-white shadow-[0_0_12px_#ff5500] hover:bg-fire-glow transition-colors"
-                >
-                  <Send className="h-4 w-4" />
+                <button onClick={() => setShowGameDrawer(!showGameDrawer)} className="flex items-center space-x-1 rounded-xl bg-neon-cyan/20 border border-neon-cyan/40 p-2 text-xs font-black text-neon-cyan hover:bg-neon-cyan/30" title="Jogos no Chat">
+                  <Gamepad2 className="h-4 w-4" />
                 </button>
+
+                <input type="text" placeholder="Mensagem..." value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSend()} className="flex-1 rounded-xl bg-dark-elevated border border-white/15 px-3 py-2 text-xs text-white focus:outline-hidden" />
+                <button onClick={handleSend} className="rounded-xl bg-fire p-2 text-white shadow-[0_0_10px_#ff5500]"><Send className="h-4 w-4" /></button>
               </div>
 
-              {/* DRAWER DE SELEÇÃO DE JOGOS */}
               <AnimatePresence>
                 {showGameDrawer && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="pt-2 border-t border-white/10 space-y-2 overflow-hidden"
-                  >
-                    <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Escolha um Mini Jogo para mandar no chat:</p>
-                    <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
-                      {gamesList.map((g) => (
-                        <button
-                          key={g.type}
-                          onClick={() => handleStartGame(g.type, g.name)}
-                          className="flex flex-col items-start rounded-xl bg-dark-elevated p-2.5 border border-white/10 hover:border-neon-cyan/60 hover:bg-neon-cyan/10 transition-all text-left"
-                        >
-                          <span className="text-xs font-bold text-white">{g.name}</span>
-                          <span className="text-[9px] text-neutral-400 mt-0.5 line-clamp-1">{g.desc}</span>
-                        </button>
-                      ))}
-                    </div>
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="pt-2 border-t border-white/10 grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                    {gamesList.map((g) => (<button key={g.type} onClick={() => handleStartGame(g.type, g.name)} className="rounded-xl bg-dark-elevated p-2 border border-white/10 text-left hover:border-neon-cyan"><span className="text-xs font-bold text-white block">{g.name}</span><span className="text-[9px] text-neutral-400">{g.desc}</span></button>))}
                   </motion.div>
                 )}
               </AnimatePresence>

@@ -1,24 +1,36 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Instant, FriendChat, User, Pet, GameInvite } from "@/types";
-import { CURRENT_USER_MOCK, INITIAL_INSTANTS, INITIAL_FRIENDS_CHATS, INITIAL_MY_PET } from "@/data/mockData";
+import { Instant, FriendChat, User, Pet, GameInvite, Clan } from "@/types";
+import { CURRENT_USER_MOCK, INITIAL_INSTANTS, INITIAL_FRIENDS_CHATS, INITIAL_MY_PET, INITIAL_CLAN } from "@/data/mockData";
 
 interface AppContextType {
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   pet: Pet;
   setPet: React.Dispatch<React.SetStateAction<Pet>>;
+  clan: Clan;
+  setClan: React.Dispatch<React.SetStateAction<Clan>>;
   instants: Instant[];
   chats: FriendChat[];
-  activeTab: "feed" | "camera" | "pet" | "chat" | "profile";
-  setActiveTab: (tab: "feed" | "camera" | "pet" | "chat" | "profile") => void;
+  activeTab: "feed" | "camera" | "pet" | "chat" | "clan" | "profile";
+  setActiveTab: (tab: "feed" | "camera" | "pet" | "chat" | "clan" | "profile") => void;
+  isSimultaneousActive: boolean;
+  setIsSimultaneousActive: (active: boolean) => void;
   addInstant: (mediaUrl: string, caption: string, mediaType?: "image" | "video") => void;
   likeInstant: (id: string) => void;
-  replyToInstant: (instantId: string, text: string) => void;
+  replyWithPhotoOnly: (instantId: string, photoUrl: string) => void;
   sendMessage: (friendId: string, text?: string, mediaUrl?: string) => void;
   sendGameInvite: (friendId: string, gameType: GameInvite["gameType"], gameName: string) => void;
   sendPetInvite: (friendId: string, petName: string, petType: Pet["type"]) => void;
+  sendVoiceMessage: (friendId: string, duration: number) => void;
+  sendSecretViewOnce: (friendId: string, text: string) => void;
+  viewSecretMessage: (friendId: string, msgId: string) => void;
+  reactToMessage: (friendId: string, msgId: string, emoji: string) => void;
+  sendTimeCapsule: (friendId: string, title: string, secretText: string, days: number) => void;
+  triggerAiMemory: (friendId: string) => void;
+  breedPets: (friendPetType: Pet["type"], name: string) => void;
+  claimClanMission: (missionId: string) => void;
   feedPet: () => void;
   playPet: () => void;
   cleanPet: () => void;
@@ -44,247 +56,143 @@ export const useApp = () => {
 export function Providers({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [pet, setPet] = useState<Pet>(INITIAL_MY_PET);
+  const [clan, setClan] = useState<Clan>(INITIAL_CLAN);
   const [instants, setInstants] = useState<Instant[]>(INITIAL_INSTANTS);
   const [chats, setChats] = useState<FriendChat[]>(INITIAL_FRIENDS_CHATS);
-  const [activeTab, setActiveTab] = useState<"feed" | "camera" | "pet" | "chat" | "profile">("feed");
+  const [activeTab, setActiveTab] = useState<"feed" | "camera" | "pet" | "chat" | "clan" | "profile">("feed");
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [isSimultaneousActive, setIsSimultaneousActive] = useState(true);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("instants_user_v2");
-    const savedPet = localStorage.getItem("instants_pet_v2");
-    if (savedUser) {
-      try { setUser(JSON.parse(savedUser)); } catch (e) {}
-    }
-    if (savedPet) {
-      try { setPet(JSON.parse(savedPet)); } catch (e) {}
-    }
+    const u = localStorage.getItem("instants_u_v5");
+    if (u) try { setUser(JSON.parse(u)); } catch (e) {}
   }, []);
 
-  const saveUserAndPet = (u: User | null, p: Pet) => {
-    if (u) localStorage.setItem("instants_user_v2", JSON.stringify(u));
-    localStorage.setItem("instants_pet_v2", JSON.stringify(p));
+  const saveUser = (u: User | null) => {
+    if (u) localStorage.setItem("instants_u_v5", JSON.stringify(u));
   };
 
   const registerAccount = (name: string, handle: string, petName: string, petType: Pet["type"]) => {
-    const newUser: User = {
-      ...CURRENT_USER_MOCK,
-      name: name || "Alex Cyber",
-      handle: handle.startsWith("@") ? handle : `@${handle}`,
-    };
-    const newPet: Pet = {
-      ...INITIAL_MY_PET,
-      name: petName || "Byte",
-      type: petType || "dragon",
-      owners: [{ name: newUser.name, avatar: newUser.image }],
-      isShared: false,
-    };
-    setUser(newUser);
-    setPet(newPet);
-    saveUserAndPet(newUser, newPet);
+    const newUser: User = { ...CURRENT_USER_MOCK, name: name || "Alex Cyber", handle: handle.startsWith("@") ? handle : `@${handle}` };
+    const newPet: Pet = { ...INITIAL_MY_PET, name: petName || "Byte", type: petType || "dragon", owners: [{ name: newUser.name, avatar: newUser.image }], isShared: false };
+    setUser(newUser); setPet(newPet); saveUser(newUser);
   };
 
   const loginAccount = (handle: string) => {
     const defaultName = handle ? handle.replace("@", "").toUpperCase() : "Alex Cyber";
-    const loggedUser: User = {
-      ...CURRENT_USER_MOCK,
-      name: defaultName,
-      handle: handle.startsWith("@") ? handle : `@${handle || "alex.instants"}`,
-    };
-    setUser(loggedUser);
-    saveUserAndPet(loggedUser, pet);
+    const loggedUser: User = { ...CURRENT_USER_MOCK, name: defaultName, handle: handle.startsWith("@") ? handle : `@${handle || "alex.instants"}` };
+    setUser(loggedUser); saveUser(loggedUser);
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("instants_user_v2");
+  const logout = () => { setUser(null); localStorage.removeItem("instants_u_v5"); };
+
+  const feedPet = () => { setPet((p: any) => ({ ...p, hunger: Math.min(100, p.hunger + 25), xp: p.xp + 15 })); };
+  const playPet = () => { setPet((p: any) => ({ ...p, happiness: Math.min(100, p.happiness + 25), energy: Math.max(0, p.energy - 10), xp: p.xp + 20 })); };
+  const cleanPet = () => { setPet((p: any) => ({ ...p, hygiene: Math.min(100, p.hygiene + 30), xp: p.xp + 10 })); };
+  const sleepPet = () => { setPet((p: any) => ({ ...p, energy: 100 })); };
+  const updatePetStyle = (slot: any, value: string) => { setPet((p: any) => ({ ...p, [slot]: value })); };
+
+  const breedPets = (friendPetType: any, newName: string) => {
+    setPet((p: any) => ({ ...p, name: newName || "Quimera Cósmica", type: "alien", level: p.level + 2, rarity: "cosmic" as const }));
   };
 
-  const feedPet = () => {
-    setPet((prev: any) => {
-      const next = { ...prev, hunger: Math.min(100, prev.hunger + 25), xp: prev.xp + 15 };
-      saveUserAndPet(user, next);
-      return next;
-    });
-  };
-
-  const playPet = () => {
-    setPet((prev: any) => {
-      const next = { ...prev, happiness: Math.min(100, prev.happiness + 25), energy: Math.max(0, prev.energy - 10), xp: prev.xp + 20 };
-      saveUserAndPet(user, next);
-      return next;
-    });
-  };
-
-  const cleanPet = () => {
-    setPet((prev: any) => {
-      const next = { ...prev, hygiene: Math.min(100, prev.hygiene + 30), xp: prev.xp + 10 };
-      saveUserAndPet(user, next);
-      return next;
-    });
-  };
-
-  const sleepPet = () => {
-    setPet((prev: any) => {
-      const next = { ...prev, energy: 100 };
-      saveUserAndPet(user, next);
-      return next;
-    });
-  };
-
-  const updatePetStyle = (slot: "hat" | "glasses" | "accessory", value: string) => {
-    setPet((prev: any) => {
-      const next = { ...prev, [slot]: value };
-      saveUserAndPet(user, next);
-      return next;
-    });
+  const claimClanMission = (missionId: string) => {
+    setClan((cl: any) => ({ ...cl, xp: cl.xp + 800, level: cl.level + 1, missions: cl.missions.map((m: any) => m.id === missionId ? { ...m, completed: true } : m) }));
   };
 
   const addInstant = (mediaUrl: string, caption: string, mediaType: "image" | "video" = "image") => {
     if (!user) return;
-
     const newInst: Instant = {
-      id: `inst-${Date.now()}`,
-      userId: user.id,
-      userName: user.name,
-      userHandle: user.handle,
-      userImage: user.image,
-      mediaUrl,
-      mediaType,
-      caption,
-      createdAt: "agora mesmo",
-      timestamp: Date.now(),
-      likes: 0,
-      hasLiked: false,
-      streakDays: user.streak + 1,
-      location: "Meu Story ✨",
-      repliesCount: 0,
-      reactions: [],
+      id: `inst-${Date.now()}`, userId: user.id, userName: user.name, userHandle: user.handle, userImage: user.image,
+      mediaUrl, mediaType, caption, createdAt: "agora mesmo", timestamp: Date.now(), likes: 0, hasLiked: false, streakDays: user.streak + 1, location: "BeReal Story ✨", repliesCount: 0, reactions: []
     };
-
     const updatedUser = { ...user, streak: user.streak + 1, instantsCount: user.instantsCount + 1 };
     setUser(updatedUser);
-
-    // Tirar foto dá +30 de comida e felicidade pro Pet co-op! 🐾
-    setPet((prev: any) => {
-      const next = { ...prev, hunger: Math.min(100, prev.hunger + 30), happiness: Math.min(100, prev.happiness + 30) };
-      saveUserAndPet(updatedUser, next);
-      return next;
-    });
-
+    setIsSimultaneousActive(false);
+    setPet((p: any) => ({ ...p, hunger: 100, happiness: 100 }));
     setInstants((prev: any) => [newInst, ...prev]);
   };
 
   const likeInstant = (id: string) => {
-    setInstants((prev: any) =>
-      prev.map((inst: any) => {
-        if (inst.id === id) {
-          const hasLiked = !inst.hasLiked;
-          return { ...inst, hasLiked, likes: hasLiked ? inst.likes + 1 : inst.likes - 1 };
-        }
-        return inst;
-      })
-    );
+    setInstants((prev: any) => prev.map((inst: any) => inst.id === id ? { ...inst, hasLiked: !inst.hasLiked, likes: !inst.hasLiked ? inst.likes + 1 : inst.likes - 1 } : inst));
   };
 
-  const replyToInstant = (instantId: string, text: string) => {
-    const targetInstant = instants.find((i: any) => i.id === instantId);
-    if (!targetInstant || !user) return;
-
-    setInstants((prev: any) =>
-      prev.map((inst: any) => (inst.id === instantId ? { ...inst, repliesCount: inst.repliesCount + 1 } : inst))
-    );
-
-    sendMessage(targetInstant.userId, `📸 Story reply: "${text}"`);
+  const replyWithPhotoOnly = (instantId: string, photoUrl: string) => {
+    setInstants((prev: any) => prev.map((inst: any) => inst.id === instantId ? { ...inst, repliesCount: inst.repliesCount + 1 } : inst));
+    const target = instants.find((i: any) => i.id === instantId);
+    if (target) sendMessage(target.userId, "📸 Resposta com Foto Instantânea!", photoUrl);
   };
 
   const sendMessage = (friendId: string, text?: string, mediaUrl?: string) => {
     if (!user) return;
-
-    const newMsg = {
-      id: `msg-${Date.now()}`,
-      senderId: user.id,
-      text,
-      mediaUrl,
-      mediaType: mediaUrl ? ("image" as const) : undefined,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      isMe: true,
-    };
-
-    setChats((prev: any) =>
-      prev.map((chat: any) => {
-        if (chat.id === friendId) {
-          return { ...chat, lastMessage: text || "📸 Mídia enviada", lastMessageTime: "Agora", messages: [...chat.messages, newMsg] };
-        }
-        return chat;
-      })
-    );
+    const newMsg = { id: `msg-${Date.now()}`, senderId: user.id, text, mediaUrl, mediaType: mediaUrl ? ("image" as const) : undefined, timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), isMe: true };
+    setChats((prev: any) => prev.map((chat: any) => chat.id === friendId ? { ...chat, lastMessage: text || "📸 Mídia enviada", lastMessageTime: "Agora", messages: [...chat.messages, newMsg] } : chat));
   };
 
-  const sendGameInvite = (friendId: string, gameType: GameInvite["gameType"], gameName: string) => {
+  const sendVoiceMessage = (friendId: string, duration: number) => {
+    if (!user) return;
+    const voiceMsg = {
+      id: `msg-v-${Date.now()}`, senderId: user.id, timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), isMe: true, mediaType: "voice" as const,
+      voiceMessage: { id: `v-${Date.now()}`, duration, waves: [30, 60, 90, 100, 40, 20, 80, 95, 50, 40, 70, 80, 20] }
+    };
+    setChats((prev: any) => prev.map((chat: any) => chat.id === friendId ? { ...chat, lastMessage: `🎤 Áudio rápido (${duration}s)`, lastMessageTime: "Agora", messages: [...chat.messages, voiceMsg] } : chat));
+  };
+
+  const sendSecretViewOnce = (friendId: string, text: string) => {
+    if (!user) return;
+    const secMsg = {
+      id: `msg-sec-${Date.now()}`, senderId: user.id, timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), isMe: true, mediaType: "secret_once" as const,
+      secretMessage: { id: `sec-${Date.now()}`, text, viewed: false }
+    };
+    setChats((prev: any) => prev.map((chat: any) => chat.id === friendId ? { ...chat, lastMessage: `💣👁️ Mensagem Secreta Única`, lastMessageTime: "Agora", messages: [...chat.messages, secMsg] } : chat));
+  };
+
+  const viewSecretMessage = (friendId: string, msgId: string) => {
+    setChats((prev: any) => prev.map((chat: any) => chat.id === friendId ? {
+      ...chat,
+      messages: chat.messages.map((m: any) => m.id === msgId && m.secretMessage ? { ...m, secretMessage: { ...m.secretMessage, viewed: true } } : m)
+    } : chat));
+  };
+
+  const reactToMessage = (friendId: string, msgId: string, emoji: string) => {
+    setChats((prev: any) => prev.map((chat: any) => chat.id === friendId ? {
+      ...chat,
+      messages: chat.messages.map((m: any) => m.id === msgId ? { ...m, reactions: [...(m.reactions || []), { emoji, count: 1 }] } : m)
+    } : chat));
+  };
+
+  const sendGameInvite = (friendId: string, gameType: any, gameName: string) => {
     if (!user) return;
     const inviteMsg = {
-      id: `msg-game-${Date.now()}`,
-      senderId: user.id,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      isMe: true,
-      gameInvite: {
-        id: `invite-${Date.now()}`,
-        gameType,
-        gameName,
-        senderName: user.name,
-        status: "active" as const,
-        myScore: 0,
-        friendScore: 0,
-      },
+      id: `msg-game-${Date.now()}`, senderId: user.id, timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), isMe: true,
+      gameInvite: { id: `inv-${Date.now()}`, gameType, gameName, senderName: user.name, status: "active" as const, myScore: 0, friendScore: 0, question: gameType === "quiz" ? "Qual é o mascote do nosso Clã?" : undefined, options: gameType === "quiz" ? ["Quasar 🐲", "Byte 🐱", "Fênix 🔥"] : undefined, correctOption: 0 }
     };
-
-    setChats((prev: any) =>
-      prev.map((chat: any) => (chat.id === friendId ? { ...chat, lastMessage: `🎮 Convite: ${gameName}`, lastMessageTime: "Agora", messages: [...chat.messages, inviteMsg] } : chat))
-    );
+    setChats((prev: any) => prev.map((chat: any) => chat.id === friendId ? { ...chat, lastMessage: `🎮 Desafio: ${gameName}`, lastMessageTime: "Agora", messages: [...chat.messages, inviteMsg] } : chat));
   };
 
   const sendPetInvite = (friendId: string, petName: string, petType: Pet["type"]) => {
     if (!user) return;
-    const inviteMsg = {
-      id: `msg-pet-${Date.now()}`,
-      senderId: user.id,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      isMe: true,
-      petInvite: { petName, petType, status: "pending" as const },
-    };
+    const inviteMsg = { id: `msg-pet-${Date.now()}`, senderId: user.id, timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), isMe: true, petInvite: { petName, petType, status: "pending" as const } };
+    setChats((prev: any) => prev.map((chat: any) => chat.id === friendId ? { ...chat, lastMessage: `💌 Convite Tamagotchi: ${petName}`, lastMessageTime: "Agora", messages: [...chat.messages, inviteMsg] } : chat));
+  };
 
-    setChats((prev: any) =>
-      prev.map((chat: any) => (chat.id === friendId ? { ...chat, lastMessage: `💌 Convite Tamagotchi Dupla: ${petName}`, lastMessageTime: "Agora", messages: [...chat.messages, inviteMsg] } : chat))
-    );
+  const sendTimeCapsule = (friendId: string, title: string, secretText: string, days: number) => {
+    if (!user) return;
+    const capMsg = { id: `msg-cap-${Date.now()}`, senderId: user.id, timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), isMe: true, timeCapsule: { id: `c-${Date.now()}`, title, unlockDate: `Daqui a ${days} dias`, unlockTimestamp: Date.now() + days * 864e5, isUnlocked: false, secretText } };
+    setChats((prev: any) => prev.map((chat: any) => chat.id === friendId ? { ...chat, lastMessage: `⏳🔒 Cápsula selada`, lastMessageTime: "Agora", messages: [...chat.messages, capMsg] } : chat));
+  };
+
+  const triggerAiMemory = (friendId: string) => {
+    const aiMsg = { id: `msg-ai-${Date.now()}`, senderId: friendId, mediaType: "ai_memory" as const, mediaUrl: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=800&auto=format&fit=crop&q=80", timestamp: "Agora", isMe: false };
+    setChats((prev: any) => prev.map((chat: any) => chat.id === friendId ? { ...chat, lastMessage: `🎞️✨ Memórias IA prontas`, lastMessageTime: "Agora", messages: [...chat.messages, aiMsg] } : chat));
   };
 
   return (
     <AppContext.Provider
       value={{
-        user,
-        setUser,
-        pet,
-        setPet,
-        instants,
-        chats,
-        activeTab,
-        setActiveTab,
-        addInstant,
-        likeInstant,
-        replyToInstant,
-        sendMessage,
-        sendGameInvite,
-        sendPetInvite,
-        feedPet,
-        playPet,
-        cleanPet,
-        sleepPet,
-        updatePetStyle,
-        registerAccount,
-        loginAccount,
-        logout,
-        selectedChatId,
-        setSelectedChatId,
+        user, setUser, pet, setPet, clan, setClan, instants, chats, activeTab, setActiveTab, isSimultaneousActive, setIsSimultaneousActive,
+        addInstant, likeInstant, replyWithPhotoOnly, sendMessage, sendGameInvite, sendPetInvite, sendVoiceMessage, sendSecretViewOnce, viewSecretMessage, reactToMessage, sendTimeCapsule, triggerAiMemory, breedPets, claimClanMission,
+        feedPet, playPet, cleanPet, sleepPet, updatePetStyle, registerAccount, loginAccount, logout, selectedChatId, setSelectedChatId
       }}
     >
       {children}

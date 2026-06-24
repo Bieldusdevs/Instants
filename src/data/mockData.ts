@@ -1,4 +1,4 @@
-import { Instant, FriendChat, User, Pet } from '@/types';
+import { Instant, FriendChat, User, Pet, Clan } from '@/types';
 
 export const CURRENT_USER_MOCK: User = {
   id: 'user-me-123',
@@ -9,26 +9,68 @@ export const CURRENT_USER_MOCK: User = {
   streak: 28,
   instantsCount: 142,
   petId: 'pet-my-1',
+  isMapPrivate: false
 };
 
 export const INITIAL_MY_PET: Pet = {
   id: 'pet-my-1',
   name: 'Byte',
   type: 'dragon',
-  hunger: 75,
-  happiness: 85,
-  energy: 90,
-  hygiene: 65,
-  level: 5,
-  xp: 340,
+  hunger: 80,
+  happiness: 90,
+  energy: 85,
+  hygiene: 70,
+  level: 8,
+  xp: 640,
   hat: 'crown',
   glasses: 'cyber',
   accessory: 'chain',
-  owners: [
-    { name: 'Alex Cyber', avatar: CURRENT_USER_MOCK.image },
-    { name: 'Sofia Neon', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80' }
+  owners: [{ name: 'Alex Cyber', avatar: CURRENT_USER_MOCK.image }],
+  isShared: false,
+  rarity: 'rare'
+};
+
+export const INITIAL_CLAN: Clan = {
+  id: 'clan-1',
+  name: 'Cyber-Samurais',
+  tag: '[CYBER]',
+  level: 15,
+  xp: 4200,
+  isPerfectDay: true, // Dia Perfeito Ativo 🌟💯
+  mascot: {
+    id: 'clan-pet-1',
+    name: 'Quasar',
+    type: 'chimera',
+    hunger: 95,
+    happiness: 100,
+    energy: 90,
+    hygiene: 85,
+    level: 22,
+    xp: 8900,
+    hat: 'wizard',
+    glasses: 'pixel',
+    accessory: 'aura',
+    owners: [
+      { name: 'Alex Cyber', avatar: CURRENT_USER_MOCK.image },
+      { name: 'Sofia Neon', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80' },
+      { name: 'Lucas Shader', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80' },
+      { name: 'Bia Cyber', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80' }
+    ],
+    isShared: true,
+    rarity: 'legendary'
+  },
+  members: [
+    { id: 'user-me-123', name: 'Alex Cyber', handle: '@alex.instants', avatar: CURRENT_USER_MOCK.image, role: 'Líder', weeklyPoints: 1450, hasPostedToday: true },
+    { id: 'friend-1', name: 'Sofia Neon', handle: '@sofia.vibe', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80', role: 'Membro', weeklyPoints: 1320, hasPostedToday: true },
+    { id: 'friend-2', name: 'Lucas Shader', handle: '@lucas.glsl', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80', role: 'Membro', weeklyPoints: 980, hasPostedToday: true },
+    { id: 'friend-3', name: 'Bia Cyber', handle: '@bia.3d', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80', role: 'Membro', weeklyPoints: 850, hasPostedToday: true }
   ],
-  isShared: true,
+  missions: [
+    { id: 'mis-1', title: 'Todos os 4 membros partilharem Instants hoje', progress: 4, total: 4, rewardXp: 500, rewardItem: 'Coroa Suprema', completed: true },
+    { id: 'mis-2', title: 'Vencer 5 duelos de Quiz no Chat', progress: 5, total: 5, rewardXp: 800, rewardItem: 'Aura Cósmica', completed: true },
+    { id: 'mis-3', title: 'Alimentar o Mascote Quasar em conjunto', progress: 8, total: 10, rewardXp: 400, completed: false }
+  ],
+  unlockedCosmetics: ['crown', 'wizard', 'pixel', 'aura', 'chain']
 };
 
 export const INITIAL_INSTANTS: Instant[] = [
@@ -40,17 +82,17 @@ export const INITIAL_INSTANTS: Instant[] = [
     userImage: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
     mediaUrl: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=800&auto=format&fit=crop&q=80',
     mediaType: 'image',
-    caption: 'Alimentando nosso pet Byte depois da chuva em Tóquio 🐉⚡️',
-    createdAt: 'há 12 min',
-    timestamp: Date.now() - 12 * 60 * 1000,
-    likes: 24,
+    caption: 'Foto simultânea capturada no tempo exato! BeReal vibe ⚡️🪐',
+    createdAt: 'há 2 min',
+    timestamp: Date.now() - 2 * 60 * 1000,
+    likes: 45,
     hasLiked: false,
     streakDays: 19,
     location: 'Tóquio, JP',
-    repliesCount: 3,
+    coordinates: { x: 75, y: 35 },
+    repliesCount: 4,
     reactions: [
-      { id: 'r1', emoji: '🔥', userName: 'Lucas', userImage: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80' },
-      { id: 'r2', emoji: '⚡️', userName: 'Bia', userImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80' }
+      { id: 'r1', emoji: '🔥', userName: 'Lucas', userImage: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80' }
     ]
   },
   {
@@ -61,17 +103,16 @@ export const INITIAL_INSTANTS: Instant[] = [
     userImage: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80',
     mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
     mediaType: 'image',
-    caption: 'Ganhei de 5x3 na Guerra Espacial pelo chat do Instants 🚀🎮',
+    caption: 'Dia Perfeito alcançado com o Clã! Recompensas em dobro 🌟💯',
     createdAt: 'há 45 min',
     timestamp: Date.now() - 45 * 60 * 1000,
-    likes: 42,
+    likes: 68,
     hasLiked: true,
     streakDays: 34,
     location: 'Lisboa, PT',
-    repliesCount: 7,
-    reactions: [
-      { id: 'r4', emoji: '🚀', userName: 'Alex', userImage: CURRENT_USER_MOCK.image }
-    ]
+    coordinates: { x: 45, y: 40 },
+    repliesCount: 9,
+    reactions: []
   }
 ];
 
@@ -82,45 +123,58 @@ export const INITIAL_FRIENDS_CHATS: FriendChat[] = [
     handle: '@sofia.vibe',
     avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
     streak: 19,
-    sharedPet: INITIAL_MY_PET,
-    lastMessage: 'Partilha uma foto pro Byte ganhar comida! 🍎',
+    friendshipLevel: 14,
+    friendshipXp: 850,
+    friendshipPet: INITIAL_CLAN.mascot,
+    achievements: [
+      { id: 'ach-1', title: 'Dia Perfeito Coletivo', icon: '🌟', desc: 'Postaram juntos no BeReal time exato', unlockedAt: 'Hoje' },
+      { id: 'ach-2', title: 'Mestre do Áudio', icon: '🎤', desc: 'Trocaram áudios rápidos de 10 segundos', unlockedAt: 'Ontem' }
+    ],
+    activityCalendar: [true, true, true, true, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
+    lastMessage: 'Ouça meu áudio rápido de 8 segundos! 🎤⚡️',
     lastMessageTime: '12:42',
     unreadCount: 1,
     isOnline: true,
     messages: [
-      { id: 'm1', senderId: 'friend-1', text: 'Hey Alex! O Byte está com 75% de fome.', timestamp: '11:20', isMe: false },
-      { id: 'm2', senderId: 'user-me-123', text: 'Já vou dar uma maçã cibernética pra ele!!', timestamp: '11:22', isMe: true },
-      { 
-        id: 'm3', 
-        senderId: 'friend-1', 
-        timestamp: '12:40', 
+      { id: 'm1', senderId: 'friend-1', text: 'Hey Alex! Viu o ranking de amigos hoje? Estamos no topo 🏆', timestamp: '11:20', isMe: false },
+      {
+        id: 'm-voice-1',
+        senderId: 'friend-1',
+        timestamp: '11:25',
         isMe: false,
-        gameInvite: {
-          id: 'g-invite-1',
-          gameType: 'space',
-          gameName: 'Guerra Espacial 🚀👾',
-          senderName: 'Sofia Neon',
-          status: 'pending',
-          myScore: 0,
-          friendScore: 0
-        }
+        mediaType: 'voice',
+        voiceMessage: { id: 'v-1', duration: 8, waves: [20, 45, 80, 95, 60, 30, 85, 100, 70, 40, 50, 90, 30, 20] }
       },
-      { id: 'm4', senderId: 'friend-1', text: 'Partilha uma foto pro Byte ganhar comida! 🍎', timestamp: '12:42', isMe: false }
+      {
+        id: 'm-sec-1',
+        senderId: 'friend-1',
+        timestamp: '11:30',
+        isMe: false,
+        mediaType: 'secret_once',
+        secretMessage: { id: 'sec-1', text: 'Código VIP do nosso After Party Neon! 🪩🔑', viewed: false }
+      },
+      { id: 'm3', senderId: 'friend-1', text: 'Ouça meu áudio rápido de 8 segundos! 🎤⚡️', timestamp: '12:42', isMe: false }
     ]
   },
   {
-    id: 'friend-2',
-    name: 'Lucas Shader',
-    handle: '@lucas.glsl',
-    avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80',
-    streak: 34,
-    lastMessage: 'Bora uma partida de Ping Pong? 🏓',
-    lastMessageTime: 'Ontem',
-    unreadCount: 0,
+    id: 'room-party-1',
+    name: 'Sala After Party Cyber 🪩🎉',
+    handle: '@event.room',
+    avatar: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=200&auto=format&fit=crop&q=80',
+    streak: 5,
+    friendshipLevel: 1,
+    friendshipXp: 100,
+    friendshipPet: INITIAL_MY_PET,
+    achievements: [],
+    isTemporaryRoom: true,
+    roomExpiresIn: '11h 40m',
+    lastMessage: 'A festa expira amanhã de manhã!! Mandem Instants',
+    lastMessageTime: 'Agora',
+    unreadCount: 3,
     isOnline: true,
     messages: [
-      { id: 'm5', senderId: 'friend-2', text: 'E aí mano, batemos 34 dias de foguinho 🔥🔥', timestamp: 'Ontem', isMe: false },
-      { id: 'm6', senderId: 'friend-2', text: 'Bora uma partida de Ping Pong? 🏓', timestamp: 'Ontem', isMe: false }
+      { id: 'p-1', senderId: 'friend-2', text: 'Bem-vindos à sala temporária de sexta-feira!! 🪩🚀', timestamp: '22:00', isMe: false },
+      { id: 'p-2', senderId: 'user-me-123', text: 'Essa sala expira em 12h, bora curtir', timestamp: '22:05', isMe: true }
     ]
   }
 ];

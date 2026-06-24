@@ -3,28 +3,30 @@ export interface User {
   name: string;
   email: string;
   image: string;
-  streak: number; // Foguinho diário 🔥
+  streak: number;
   instantsCount: number;
   handle: string;
   password?: string;
   petId?: string;
+  isMapPrivate?: boolean;
 }
 
 export interface Pet {
   id: string;
   name: string;
-  type: 'cat' | 'dog' | 'dragon' | 'fox';
-  hunger: number;     // 0 a 100
-  happiness: number;  // 0 a 100
-  energy: number;     // 0 a 100
-  hygiene: number;    // 0 a 100
+  type: 'cat' | 'dog' | 'dragon' | 'fox' | 'chimera' | 'alien' | 'phoenix';
+  hunger: number;
+  happiness: number;
+  energy: number;
+  hygiene: number;
   level: number;
   xp: number;
-  hat: string;        // 'none' | 'crown' | 'wizard' | 'cap'
-  glasses: string;    // 'none' | 'cyber' | 'thug' | 'pixel'
-  accessory: string;  // 'none' | 'scarf' | 'chain' | 'aura'
+  hat: string;
+  glasses: string;
+  accessory: string;
   owners: { name: string; avatar: string }[];
   isShared: boolean;
+  rarity?: 'common' | 'rare' | 'legendary' | 'cosmic';
 }
 
 export interface Reaction {
@@ -51,16 +53,52 @@ export interface Instant {
   reactions: Reaction[];
   repliesCount: number;
   location?: string;
+  coordinates?: { x: number; y: number };
+}
+
+export interface TimeCapsule {
+  id: string;
+  title: string;
+  unlockDate: string;
+  unlockTimestamp: number;
+  isUnlocked: boolean;
+  secretText?: string;
+  mediaUrl?: string;
+}
+
+export interface Achievement {
+  id: string;
+  title: string;
+  icon: string;
+  desc: string;
+  unlockedAt: string;
 }
 
 export interface GameInvite {
   id: string;
-  gameType: 'pingpong' | 'soccer' | 'checkers' | 'race' | 'space';
+  gameType: 'pingpong' | 'soccer' | 'checkers' | 'race' | 'space' | 'quiz' | 'guess_pic';
   gameName: string;
   senderName: string;
   status: 'pending' | 'active' | 'finished';
   myScore: number;
   friendScore: number;
+  question?: string;
+  options?: string[];
+  correctOption?: number;
+  blurredPic?: string;
+}
+
+export interface SecretMessage {
+  id: string;
+  text?: string;
+  mediaUrl?: string;
+  viewed: boolean;
+}
+
+export interface VoiceMessage {
+  id: string;
+  duration: number; // 5 a 15 seg
+  waves: number[];
 }
 
 export interface ChatMessage {
@@ -68,9 +106,13 @@ export interface ChatMessage {
   senderId: string;
   text?: string;
   mediaUrl?: string;
-  mediaType?: 'image' | 'video' | 'instant';
+  mediaType?: 'image' | 'video' | 'instant' | 'ai_memory' | 'voice' | 'secret_once';
   gameInvite?: GameInvite;
   petInvite?: { petName: string; petType: Pet['type']; status: 'pending' | 'accepted' };
+  timeCapsule?: TimeCapsule;
+  secretMessage?: SecretMessage;
+  voiceMessage?: VoiceMessage;
+  reactions?: { emoji: string; count: number }[];
   timestamp: string;
   isMe: boolean;
 }
@@ -80,11 +122,40 @@ export interface FriendChat {
   name: string;
   handle: string;
   avatar: string;
-  streak: number; // Ofensiva Foguinho 🔥
-  sharedPet?: Pet;
+  streak: number; // Foguinho 🔥
+  friendshipLevel: number;
+  friendshipXp: number;
+  friendshipPet: Pet;
+  achievements: Achievement[];
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;
   isOnline: boolean;
+  isTemporaryRoom?: boolean;
+  roomExpiresIn?: string;
+  activityCalendar?: boolean[]; // 30 dias (true = mandou instant)
   messages: ChatMessage[];
+}
+
+export interface ClanMission {
+  id: string;
+  title: string;
+  progress: number;
+  total: number;
+  rewardXp: number;
+  rewardItem?: string;
+  completed: boolean;
+}
+
+export interface Clan {
+  id: string;
+  name: string;
+  tag: string;
+  level: number;
+  xp: number;
+  mascot: Pet;
+  isPerfectDay?: boolean; // Dia Perfeito 🌟
+  members: { id: string; name: string; handle: string; avatar: string; role: 'Líder' | 'Membro'; weeklyPoints: number; hasPostedToday?: boolean }[];
+  missions: ClanMission[];
+  unlockedCosmetics: string[];
 }
